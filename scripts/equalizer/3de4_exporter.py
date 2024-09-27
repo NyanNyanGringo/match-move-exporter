@@ -9,47 +9,20 @@
 #
 
 
-import logging
 import os
 import re
-import sys
 
 import tde4
 
+from lib.utilities.os_utilities import get_root_path
 from lib.utilities.cmd_utilities import run_terminal_command, correct_path_to_console_path, execute_nuke_script
-from lib.utilities.nuke_utilities import generate_and_get_nuke_python_script_path
+from lib.utilities.nuke_utilities import get_export_py_script
+from lib.utilities.log_utilities import setup_or_get_logger
 
 
-# TODO: донастроить логирование
-# log_file = os.path.join(os.getenv("MATCH_MOVE_EXPORTER_PATH"), "logs", "3de4.log")
-# os.makedirs(os.path.dirname(log_file), exist_ok=True)
-#
-# logging.basicConfig(
-#     filename=log_file,
-#     level=logging.DEBUG if os.getenv("DEV") else logging.INFO,
-#     format='%(asctime)s - %(levelname)s - %(message)s'
-# )
-#
-# # Создаем обработчик для вывода в консоль (stdout)
-# console_handler = logging.StreamHandler(sys.stdout)
-#
-# # Настраиваем формат для консольного вывода (можно использовать тот же формат, что и для файла)
-# console_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-# console_handler.setFormatter(console_formatter)
-#
-# # Добавляем консольный обработчик к текущему логгеру
-# logger = logging.getLogger()  # Получаем корневой логгер
-# logger.addHandler(console_handler)
-#
-# # Пример логирования
-# logger.debug("Это сообщение для отладки.")
-# logger.info("Это информационное сообщение.")
-# logger.warning("Это предупреждение.")
-# logger.error("Это ошибка.")
-# logger.critical("Это критическая ошибка.")
+LOGGER = setup_or_get_logger(force_setup=True, use_console_handler=False)
 
-
-NUKE_SCRIPT = r"C:\Users\user\github\MatchMoveExporter\test_files\sh020\v001\sh020_track_v001.nk"
+NUKE_EXPORT_SCRIPT = r"C:\Users\user\github\MatchMoveExporter\test_files\sh020\v001\sh020_track_v001.nk"
 NUKE_EXECUTABLE = os.getenv("NUKE_EXECUTABLE_PATH")
 
 
@@ -75,11 +48,13 @@ def button_clicked_callback(requester, widget, action) -> None:
 	if not check_nuke_executable_path():
 		return
 
-	# TODO: stopped there
-	execute_nuke_script(nuke_exec_path=NUKE_EXECUTABLE,
-						nuke_script_path=NUKE_SCRIPT,
-						py_script_path=generate_and_get_nuke_python_script_path())
+	execute_nuke_script(NUKE_EXECUTABLE,  # nuke_exec_path
+						get_export_py_script(),  # py_script_path
+						NUKE_EXPORT_SCRIPT,  # args: add nuke export-script path
+						PATHS_TO_ADD_TO_PYTHONPATH=[get_root_path()]  # kwargs: add access to lib folder for nuke
+						)
 
+	LOGGER.info("EQUALIZER STILL HAS LOGGING!")
 
 def label_changed_callback(requester, widget, action) -> None:
 	print ("New callback from widget ",widget," received, action: ",action)
@@ -89,6 +64,7 @@ def label_changed_callback(requester, widget, action) -> None:
 
 def _MatchMoveExporterUpdate(requester) -> None:
 	print ("New update callback received, put your code here...")
+	# LOGGER.info("EQUALIZER STILL HAS LOGGING!")
 	return
 
 

@@ -1,0 +1,132 @@
+2024-09-27 12:09:52,077 - INFO - HELLO WORLD
+2024-09-27 12:10:16,251 - INFO - HELLO WORLD
+2024-09-27 12:15:25,278 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:15:58,210 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:16:15,613 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:16:28,005 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:17:35,088 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:17:39,406 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:17:46,960 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:17:58,414 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:18:25,985 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:21:30,830 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:21:35,470 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:23:17,025 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:23:19,925 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:23:22,911 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:31:35,095 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:31:37,415 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:31:37,415 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:33:06,430 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:33:08,796 - INFO - 3de4 with MatchMoveExporter started.
+2024-09-27 12:34:09,852 - MatchMoveExporter - INFO - <string> - Line: 23 - 3de4 with MatchMoveExporter started.
+2024-09-27 12:35:27,326 - MatchMoveExporter - INFO - <string> - Line: 23 - 3de4 with MatchMoveExporter started.
+2024-09-27 12:35:34,330 - MatchMoveExporter - INFO - <string> - Line: 23 - 3de4 with MatchMoveExporter started.
+2024-09-27 12:35:48,135 - MatchMoveExporter - INFO - <string> - Line: 23 - File: <string> - 3de4 with MatchMoveExporter started.
+2024-09-27 12:38:11,346 - MatchMoveExporter - INFO - <string> - Line: 23 - File: <string> - 3de4 with MatchMoveExporter started.
+2024-09-27 12:38:11,346 - MatchMoveExporter - ERROR - <string> - Line: 31 - File: <string> - Попытка деления на ноль
+Traceback (most recent call last):
+  File "<string>", line 28, in divide
+ZeroDivisionError: division by zero
+2024-09-27 12:38:29,996 - MatchMoveExporter - INFO - <string> - Line: 23 - File: <string> - 3de4 with MatchMoveExporter started.
+2024-09-27 12:41:08,271 - MatchMoveExporter - INFO - <string> - Line: 23 - File: <string> - 3de4 with MatchMoveExporter started.
+2024-09-27 12:41:30,683 - MatchMoveExporter - INFO - <string> - Line: 23 - File: <string> - 3de4 with MatchMoveExporter started.
+2024-09-27 12:41:30,683 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 30, in <module>
+  File "<string>", line 27, in divide
+ZeroDivisionError: division by zero
+2024-09-27 12:41:52,737 - MatchMoveExporter - INFO - <string> - Line: 23 - File: <string> - 3de4 with MatchMoveExporter started.
+2024-09-27 12:42:15,851 - MatchMoveExporter - INFO - <string> - Line: 23 - File: <string> - 3de4 with MatchMoveExporter started.
+2024-09-27 12:42:15,851 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 30, in <module>
+  File "<string>", line 27, in divide
+ZeroDivisionError: division by zero
+2024-09-27 13:55:15,036 - MatchMoveExporter - INFO - log_utilities - Line: 78 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 13:55:47,731 - MatchMoveExporter - INFO - log_utilities - Line: 78 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 13:59:11,182 - MatchMoveExporter - INFO - log_utilities - Line: 78 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:01:05,583 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:02:04,100 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:02:06,587 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:02:06,602 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 17 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur8
+2024-09-27 14:02:23,125 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:02:25,460 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:02:25,475 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 17 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur9
+2024-09-27 14:02:28,537 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:02:28,553 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 17 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur10
+2024-09-27 14:02:33,228 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:02:33,251 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 17 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur11
+2024-09-27 14:02:39,570 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:03:00,522 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:03:05,160 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:03:05,176 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 17 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur12
+2024-09-27 14:03:31,575 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:03:33,144 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 57, in button_clicked_callback
+TypeError: log() missing 1 required positional argument: 'msg'
+2024-09-27 14:03:34,511 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:03:34,527 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 17 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur13
+2024-09-27 14:03:51,898 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:03:52,985 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 57, in button_clicked_callback
+TypeError: log() missing 1 required positional argument: 'msg'
+2024-09-27 14:03:54,348 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:03:54,364 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 17 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur14
+2024-09-27 14:04:15,780 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:04:16,522 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 57, in button_clicked_callback
+TypeError: log() missing 1 required positional argument: 'msg'
+2024-09-27 14:04:39,104 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:04:39,802 - MatchMoveExporter - INFO - <string> - Line: 57 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-09-27 14:04:41,131 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:04:41,148 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 17 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur15
+2024-09-27 14:05:05,960 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:05:06,787 - MatchMoveExporter - INFO - <string> - Line: 57 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-09-27 14:05:35,838 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:05:40,142 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:06:28,179 - MatchMoveExporter - INFO - log_utilities - Line: 81 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:06:28,179 - MatchMoveExporter - INFO - log_utilities - Line: 82 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-09-27 14:06:29,926 - MatchMoveExporter - INFO - <string> - Line: 57 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-09-27 14:09:17,650 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:09:17,650 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-09-27 14:09:18,966 - MatchMoveExporter - INFO - <string> - Line: 57 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-09-27 14:09:45,918 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:09:45,918 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-09-27 14:09:45,950 - MatchMoveExporter - INFO - <string> - Line: 68 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-09-27 14:10:54,970 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:10:54,970 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-09-27 14:10:54,995 - MatchMoveExporter - INFO - <string> - Line: 68 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-09-27 14:10:55,909 - MatchMoveExporter - INFO - <string> - Line: 57 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-09-27 14:11:15,926 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:11:15,926 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-09-27 14:11:15,950 - MatchMoveExporter - INFO - <string> - Line: 68 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-09-27 14:11:16,782 - MatchMoveExporter - INFO - <string> - Line: 57 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-09-27 14:13:51,303 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:13:51,303 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-09-27 14:13:51,336 - MatchMoveExporter - INFO - <string> - Line: 68 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-09-27 14:16:52,900 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:16:52,900 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-09-27 14:16:53,935 - MatchMoveExporter - INFO - <string> - Line: 57 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-09-27 14:16:55,268 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 14:16:55,269 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-09-27 14:16:55,269 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 10 - File: NUKE_PYTHON_SCRIPT.py - Nuke works good!
+2024-09-27 14:16:55,284 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 18 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur16
+2024-09-27 15:03:01,794 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 15:03:01,795 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-09-27 15:03:03,050 - MatchMoveExporter - INFO - <string> - Line: 57 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-09-27 15:03:22,299 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 15:03:22,299 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-09-27 15:03:22,299 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 10 - File: NUKE_PYTHON_SCRIPT.py - Nuke works good!
+2024-09-27 15:03:22,314 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 18 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur17
+2024-09-27 15:03:27,848 - MatchMoveExporter - INFO - <string> - Line: 57 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-09-27 15:03:29,206 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 15:03:29,207 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-09-27 15:03:29,207 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 10 - File: NUKE_PYTHON_SCRIPT.py - Nuke works good!
+2024-09-27 15:03:29,225 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 18 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur18
