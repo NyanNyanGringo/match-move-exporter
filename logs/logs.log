@@ -130,3 +130,32 @@ TypeError: log() missing 1 required positional argument: 'msg'
 2024-09-27 15:03:29,207 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
 2024-09-27 15:03:29,207 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 10 - File: NUKE_PYTHON_SCRIPT.py - Nuke works good!
 2024-09-27 15:03:29,225 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 18 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur18
+2024-09-27 15:27:19,689 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+ModuleNotFoundError: No module named 'rot3d'
+2024-09-27 15:27:22,736 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+NameError: name 'import1' is not defined
+2024-09-27 15:27:26,192 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+  File "<string>", line 1
+    import 1
+           ^
+SyntaxError: invalid syntax
+2024-09-27 15:27:28,489 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+ModuleNotFoundError: No module named 'asd'
+2024-09-27 16:06:49,312 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 16:06:49,312 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-09-27 16:07:02,586 - MatchMoveExporter - INFO - <string> - Line: 63 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-09-27 16:07:22,119 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 16:07:22,119 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-09-27 16:07:22,119 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 10 - File: NUKE_PYTHON_SCRIPT.py - Nuke works good!
+2024-09-27 16:07:22,146 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 18 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur1
+2024-09-27 16:07:43,194 - MatchMoveExporter - INFO - <string> - Line: 63 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-09-27 16:07:44,791 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-09-27 16:07:44,792 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-09-27 16:07:44,792 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 10 - File: NUKE_PYTHON_SCRIPT.py - Nuke works good!
+2024-09-27 16:07:44,812 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 18 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur2
