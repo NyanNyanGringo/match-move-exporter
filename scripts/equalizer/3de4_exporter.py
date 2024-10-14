@@ -16,14 +16,13 @@ import tde4
 from vl_sdv import rot3d, mat3d, VL_APPLY_ZXY
 
 from lib.utilities.os_utilities import get_root_path
-from lib.utilities.cmd_utilities import run_terminal_command, correct_path_to_console_path, execute_nuke_script
-from lib.utilities.nuke_utilities import get_export_py_script
+from lib.utilities.cmd_utilities import run_terminal_command, correct_path_to_console_path
+from lib.utilities.nuke_utilities import get_export_pyscript, execute_nuke_script
 from lib.utilities.log_utilities import setup_or_get_logger
 
 
 LOGGER = setup_or_get_logger(force_setup=True, use_console_handler=False)
 
-NUKE_EXPORT_SCRIPT = r"C:\Users\user\github\MatchMoveExporter\test_files\sh020\v001\sh020_track_v001.nk"
 NUKE_EXECUTABLE = os.getenv("NUKE_EXECUTABLE_PATH")
 
 
@@ -52,12 +51,153 @@ def button_clicked_callback(requester, widget, action) -> None:
     print ("New callback from widget ",widget," received, action: ", action)
     print ("Put your code here...")
 
+    # checks
+
     if not check_nuke_executable_path():
         return
 
+    nuke_script_name: str = tde4.getWidgetValue(requester, "textfield_name")
+
+    if not nuke_script_name.strip():
+        message = "Parameter name can't be empty."
+        tde4.postQuestionRequester("Message", message, "OK")
+        return
+
+    camera_point_group = None
+    for point_group in tde4.getPGroupList():
+        if tde4.getPGroupType(point_group) == "CAMERA":
+            camera_point_group = point_group
+    if camera_point_group is None:
+        message = "Error, there is no camera point group."
+        tde4.postQuestionRequester("Message", message, "Ok")
+
+    # nuke_export_script
+
+    versions = re.findall("_v\d+(?:_.+)?", nuke_script_name)  # search versions with postfix
+    if versions:  # TODO: добавить аргумент из командной строки ONLY_VERSION_IN_DIR_NAME
+        dir_name = versions[-1]
+    else:
+        dir_name = nuke_script_name
+
+    nuke_export_script = os.path.join(
+        os.path.dirname(tde4.getProjectPath()),
+        dir_name,
+        nuke_script_name + ".nk"
+    )
+    os.makedirs(os.path.dirname(nuke_export_script), exist_ok=True)
+
+
+
+
+
+
+
+
+
+    # cam = tde4.getCurrentCamera()
+    # noframes = tde4.getCameraNoFrames(cam)
+    # lens = tde4.getCameraLens(cam)
+    # cattr = tde4.getCameraSequenceAttr(cam)
+    # filename = tde4.getCameraPath(cam)
+    # width = tde4.getCameraImageWidth(cam)
+    # height = tde4.getCameraImageHeight(cam)
+    # camname = tde4.getCameraName(cam)
+    # focal = tde4.getCameraFocalLength(cam, 1)
+    # fback_w = tde4.getLensFBackWidth(lens)
+    # fback_h = tde4.getLensFBackHeight(lens)
+
+
+
+
+    # create json file to read in nuke
+
+    camera_point_group = [pg for pg in tde4.getPGroupList() if tde4.getPGroupType(pg) == "CAMERA"][0]
+    scene_translate = tde4.getScenePosition3D()
+    scene_rotation = convertToAngles(tde4.getSceneRotation3D())
+    scene_scale = tde4.getSceneScale3D()
+
+    # points = tde4.getPointList(camera_point_group)
+
+    JSON = {}
+
+    cameras = []
+    for camera in tde4.getCameraList():
+        camera_translate_x, camera_translate_y, camera_translate_z = [], [], []
+        camera_rotate_x, camera_rotate_y, camera_rotate_z = [], [], []
+        focal = []
+        previous_rotation = None
+        for frame in range(1, tde4.getCameraNoFrames(camera) + 1):
+            x_pos, y_pos, z_pos = tde4.getPGroupPosition3D(camera_point_group, camera, frame)
+            camera_translate_x.append(x_pos), camera_translate_y.append(y_pos), camera_translate_z.append(z_pos)
+
+            current_rotation = convertToAngles(tde4.getPGroupRotation3D(camera_point_group, camera, frame))
+            if previous_rotation:
+                current_rotation = [
+                    angleMod360(previous_rotation[0], current_rotation[0]),
+                    angleMod360(previous_rotation[1], current_rotation[1]),
+                    angleMod360(previous_rotation[2], current_rotation[2])
+                ]
+            previous_rotation = current_rotation
+            x_rot, y_rot, z_rot = current_rotation
+            camera_rotate_x.append(x_rot), camera_rotate_y.append(y_rot), camera_rotate_z.append(z_rot)
+
+            f = tde4.getCameraFocalLength(camera, frame) * 10
+            focal.append(f)
+
+        camera_dict = {
+            "first_frame": tde4.getCameraFrameOffset(camera),
+            "axis": {
+                "translate": {
+                    "x": scene_translate[0],
+                    "y": scene_translate[1],
+                    "z": scene_translate[2]
+                },
+                "rotate": {
+                    "x": scene_rotation[0],
+                    "y": scene_rotation[1],
+                    "z": scene_rotation[2]
+                },
+                "scale": scene_scale
+            },
+            "camera": {
+                "translate": {
+                    "x": camera_translate_x,
+                    "y": camera_translate_y,
+                    "z": camera_translate_z
+                },
+                "rotate": {
+                    "x": camera_rotate_x,
+                    "y": camera_rotate_y,
+                    "z": camera_rotate_z
+                },
+                "focal": focal,
+                "haperture": tde4.getLensFBackWidth(tde4.getCameraLens(camera)) * 10,
+                "vaperture": tde4.getLensFBackHeight(tde4.getCameraLens(camera)) * 10
+            }
+        }
+
+        cameras.append(camera_dict)
+
+    JSON["cameras"] = cameras
+
+
+
+
+    print("GOOD")
+
+    # axis
+    #
+
+    # camera
+    #
+
+    return
+
+    # export
+
     execute_nuke_script(NUKE_EXECUTABLE,  # nuke_exec_path
-                        get_export_py_script(),  # py_script_path
-                        NUKE_EXPORT_SCRIPT,  # args: add nuke export-script path
+                        get_export_pyscript(),  # py_script_path
+                        nuke_export_script,  # args: add nuke export-script path
                         PATHS_TO_ADD_TO_PYTHONPATH=[get_root_path()]  # kwargs: add access to lib folder for nuke
                         )
 
@@ -99,40 +239,23 @@ def convertToAngles(r3d):
     return rx, ry, rz
 
 
-def convertZup(p3d, yup):
-    """
-    Converts a 3D point's Y-up coordinates to Z-up coordinates if needed.
-
-    Args:
-        p3d (list[float]): A 3D point [x, y, z] in Y-up coordinates.
-        yup (int): Indicates whether the coordinates are Y-up (1) or Z-up (0).
-
-    Returns:
-        list: A 3D point in Z-up coordinates [x, z, -y] if yup is 0, otherwise returns the input coordinates.
-    """
-    if yup == 1:
-        return p3d
-    else:
-        return [p3d[0], -p3d[2], p3d[1]]
-
-
-def angleMod360(d0, d):
+def angleMod360(prev_angle, current_angle):
     """
     Adjusts an angle to stay within the range of -180 to 180 degrees relative to a reference angle.
 
     Args:
-        d0 (float): The reference angle.
-        d (float): The angle to be adjusted.
+        prev_angle (float): The reference angle.
+        current_angle (float): The angle to be adjusted.
 
     Returns:
         float: The adjusted angle within the -180 to 180 degree range.
     """
-    dd = d - d0
-    if dd > 180.0:
-        d = angleMod360(d0, d - 360.0)
-    elif dd < -180.0:
-        d = angleMod360(d0, d + 360.0)
-    return d
+    delta = current_angle - prev_angle
+    if delta > 180.0:
+        current_angle -= 360.0
+    elif delta < -180.0:
+        current_angle += 360.0
+    return current_angle
 
 
 def validName(name):
@@ -148,90 +271,6 @@ def validName(name):
     name = name.replace(" ", "_")
     name = name.replace("#", "_")
     return name
-
-
-class ParentNode:
-    def __init__(self, name: str, xpos: int = None, ypos: int = None,
-                 additional_strings: [str] = None):
-
-        self.class_ = getattr(self, 'class_', None)  # Берём class_ из дочернего класса, если он определён
-        if self.class_ is None:
-            raise ValueError("class_ не может быть пустым. Убедитесь, что он определён в дочернем классе.")
-
-        self.inputs = getattr(self, 'inputs', None)
-        if self.inputs is None:
-            raise ValueError("inputs не может быть пустым. Убедитесь, что он определён в дочернем классе.")
-
-        self.name = name
-
-        if xpos is not None: self.xpos = xpos
-        if ypos is not None: self.ypos = ypos
-        if additional_strings is not None: self.additional_strings = additional_strings
-
-    def _get_all_attrs(self) -> dict:
-        """
-        Возвращает все атрибуты класса и экземпляра в виде словаря.
-        """
-        attrs = {}
-        # Получаем атрибуты экземпляра
-        attrs.update(self.__dict__)
-        # Получаем атрибуты класса (без магических методов)
-        attrs.update({key: value for key, value in self.__class__.__dict__.items() if not key.startswith("__")})
-        return attrs
-
-    def get_code(self) -> str:
-        code = f"{self.class_} {{\n"
-
-        for knob_name, knob_value in self._get_all_attrs().items():
-            if knob_name == "class_":
-                continue
-            elif knob_name == "additional_strings":
-                code += f"{self.convert_additional_strings_to_text(knob_value)}\n"
-            else:
-                code += f" {knob_name} {knob_value}\n"
-
-        code += "}"
-
-        return code
-
-    @staticmethod
-    def convert_additional_strings_to_text(additional_strings: []) -> str:
-        return chr(10).join([" " + string for string in additional_strings])
-
-
-class RootNode(ParentNode):
-    class_: str = "Root"
-    inputs: int = 0
-
-    frame: int = 1001
-    first_frame: int = 1001
-    last_frame: int = 0
-    # format: bbox.x bbox.y 0 0 width height aspect name
-    format: str = "1920 1080 0 0 1920 1080 1 1920x1080"
-    fps: int = 25
-
-
-class GroupNode(ParentNode):
-    class_: str = "Group"
-    inputs: int = 0
-
-
-class ConstantNode(ParentNode):
-    class_: str = "Constant"
-    inputs: int = 0
-
-    color: str = "{1.0 1.0 1.0}"
-
-
-def generate_nuke_script():
-    code = f"""
-{RootNode(name="").get_code()}
-{GroupNode(name="").get_code()}
-{ConstantNode(name="").get_code()}
-"""
-    # TODO: stopped there :D
-
-    return code.strip()
 
 #
 # DO NOT ADD ANY CUSTOM CODE BEYOND THIS POINT!

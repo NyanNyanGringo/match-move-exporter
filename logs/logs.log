@@ -159,3 +159,259 @@ ModuleNotFoundError: No module named 'asd'
 2024-09-27 16:07:44,792 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
 2024-09-27 16:07:44,792 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 10 - File: NUKE_PYTHON_SCRIPT.py - Nuke works good!
 2024-09-27 16:07:44,812 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 18 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur2
+2024-10-14 15:50:22,100 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 15:50:22,100 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 15:55:43,506 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 15:55:43,506 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 15:55:44,626 - MatchMoveExporter - INFO - <string> - Line: 65 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-10-14 15:55:46,145 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 15:55:46,145 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 15:55:46,145 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 10 - File: NUKE_PYTHON_SCRIPT.py - Nuke works good!
+2024-10-14 15:55:46,157 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 18 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur1
+2024-10-14 15:59:15,548 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 15:59:15,548 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 15:59:22,768 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 15:59:22,768 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 15:59:23,554 - MatchMoveExporter - INFO - <string> - Line: 69 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-10-14 15:59:25,043 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 15:59:25,043 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 15:59:25,043 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 10 - File: NUKE_PYTHON_SCRIPT.py - Nuke works good!
+2024-10-14 15:59:25,055 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 18 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur1
+2024-10-14 15:59:25,055 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "NUKE_PYTHON_SCRIPT.py", line 21, in <module>
+    nuke.scriptSave(NUKE_SCRIPT)
+RuntimeError: Can't write c:\Users\user\github\MatchMoveExporter\test_files\sh020\v001\sh000_00_track_v001\sh000_00_track_v001.nk: No such file or directory
+2024-10-14 16:00:34,498 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 16:00:34,499 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 16:00:35,596 - MatchMoveExporter - INFO - <string> - Line: 71 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-10-14 16:00:36,929 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 16:00:36,929 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 16:00:36,929 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 10 - File: NUKE_PYTHON_SCRIPT.py - Nuke works good!
+2024-10-14 16:00:36,939 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 18 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur1
+2024-10-14 16:06:47,645 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 16:06:47,646 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 16:06:48,456 - MatchMoveExporter - INFO - <string> - Line: 79 - File: <string> - EQUALIZER STILL HAS LOGGING!
+2024-10-14 16:06:49,869 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 16:06:49,869 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 16:06:49,869 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 10 - File: NUKE_PYTHON_SCRIPT.py - Nuke works good!
+2024-10-14 16:06:49,882 - MatchMoveExporter - INFO - NUKE_PYTHON_SCRIPT - Line: 18 - File: NUKE_PYTHON_SCRIPT.py - Blur node created: Blur2
+2024-10-14 17:09:16,400 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:09:16,400 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:09:18,660 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 111, in button_clicked_callback
+IndexError: list index out of range
+2024-10-14 17:10:04,043 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:10:04,043 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:10:04,842 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 111, in button_clicked_callback
+IndexError: list index out of range
+2024-10-14 17:10:16,747 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:10:16,747 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:11:12,626 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:11:12,626 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:11:13,607 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 113, in button_clicked_callback
+IndexError: list index out of range
+2024-10-14 17:11:31,938 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:11:31,938 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:11:32,773 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 110, in button_clicked_callback
+IndexError: list index out of range
+2024-10-14 17:12:12,105 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:12:12,105 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:12:12,829 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 107, in button_clicked_callback
+IndexError: list index out of range
+2024-10-14 17:12:31,216 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:12:31,216 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:13:05,569 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:13:05,569 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:13:06,441 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 107, in button_clicked_callback
+IndexError: list index out of range
+2024-10-14 17:13:24,148 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:13:24,148 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:13:24,884 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 111, in button_clicked_callback
+IndexError: list index out of range
+2024-10-14 17:13:36,617 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:13:36,617 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:13:37,407 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 111, in button_clicked_callback
+IndexError: list index out of range
+2024-10-14 17:14:01,530 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:14:01,530 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:14:02,431 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 109, in button_clicked_callback
+IndexError: list index out of range
+2024-10-14 17:14:45,837 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:14:45,837 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:14:46,519 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 134, in button_clicked_callback
+TypeError: 'float' object is not subscriptable
+2024-10-14 17:15:09,509 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:15:09,509 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:15:10,521 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 126, in button_clicked_callback
+TypeError: 'float' object is not subscriptable
+2024-10-14 17:15:54,078 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:15:54,079 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:15:54,915 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 124, in button_clicked_callback
+TypeError: 'float' object is not subscriptable
+2024-10-14 17:16:27,828 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:16:27,828 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:16:28,488 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 125, in button_clicked_callback
+TypeError: 'float' object is not subscriptable
+2024-10-14 17:17:08,757 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:17:08,757 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:17:09,706 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 127, in button_clicked_callback
+TypeError: 'float' object is not subscriptable
+2024-10-14 17:18:08,586 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:18:08,586 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:18:09,327 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 129, in button_clicked_callback
+TypeError: 'float' object is not subscriptable
+2024-10-14 17:18:29,224 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:18:29,224 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:18:29,991 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 129, in button_clicked_callback
+TypeError: 'float' object is not subscriptable
+2024-10-14 17:20:11,949 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:20:11,949 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:20:12,798 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 136, in button_clicked_callback
+TypeError: 'float' object is not subscriptable
+2024-10-14 17:20:58,742 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:20:58,742 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:20:59,478 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 138, in button_clicked_callback
+TypeError: 'float' object is not subscriptable
+2024-10-14 17:21:11,781 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:21:11,781 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:21:12,587 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 138, in button_clicked_callback
+TypeError: 'float' object is not subscriptable
+2024-10-14 17:21:40,003 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:21:40,003 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:21:40,763 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 140, in button_clicked_callback
+TypeError: 'float' object is not subscriptable
+2024-10-14 17:21:53,523 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:21:53,523 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:21:54,241 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 142, in button_clicked_callback
+TypeError: 'float' object is not subscriptable
+2024-10-14 17:22:14,721 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:22:14,722 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:22:15,460 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 142, in button_clicked_callback
+TypeError: 'float' object is not subscriptable
+2024-10-14 17:22:45,076 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:22:45,076 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:22:46,196 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 142, in button_clicked_callback
+TypeError: 'float' object is not subscriptable
+2024-10-14 17:23:12,336 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:23:12,336 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:31:15,250 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:31:15,250 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:31:16,031 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 139, in button_clicked_callback
+AttributeError: 'str' object has no attribute 'getFirstCamera'
+2024-10-14 17:31:26,639 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:31:26,639 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:31:27,284 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 139, in button_clicked_callback
+AttributeError: 'str' object has no attribute 'getFirstCamera'
+2024-10-14 17:31:36,335 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:31:36,335 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:31:52,233 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:31:52,233 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:31:52,827 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 139, in button_clicked_callback
+AttributeError: 'str' object has no attribute 'getFirstCamera'
+2024-10-14 17:33:29,452 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:33:29,452 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:33:35,499 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:33:35,500 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:33:39,329 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:33:39,329 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:42:01,160 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:42:01,160 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:42:30,338 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:42:30,338 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:42:39,449 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:42:39,450 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:42:40,070 - MatchMoveExporter - CRITICAL - log_utilities - Line: 40 - File: log_utilities.py - Необработанное исключение
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "<string>", line 141, in button_clicked_callback
+ValueError: argument 3 (frame number) is out of range.
+2024-10-14 17:44:04,750 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:44:04,750 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:44:16,213 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:44:16,213 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 17:51:55,123 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 17:51:55,123 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 18:10:12,434 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 18:10:12,434 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 18:10:53,854 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 18:10:53,854 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
+2024-10-14 18:22:29,024 - MatchMoveExporter - INFO - log_utilities - Line: 86 - File: log_utilities.py - New MatchMoveExporter logger set up.
+2024-10-14 18:22:29,025 - MatchMoveExporter - INFO - log_utilities - Line: 87 - File: log_utilities.py - New MatchMoveExporter logger set up2.
