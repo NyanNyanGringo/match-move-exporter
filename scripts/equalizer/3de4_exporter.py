@@ -10,12 +10,13 @@
 import json
 import os
 import re
+import shutil
 import tempfile
 
 import tde4
 from vl_sdv import rot3d, mat3d, VL_APPLY_ZXY, vec3d
 
-from lib.utilities.os_utilities import get_root_path
+from lib.utilities.os_utilities import get_root_path, open_in_explorer
 from lib.utilities.nuke_utilities import get_export_pyscript, execute_nuke_script, get_nuke_script_path
 from lib.utilities.log_utilities import setup_or_get_logger
 from lib.utilities.export_nuke_LD_3DE4_Lens_Distortion_Node import exportNukeDewarpNode
@@ -62,7 +63,6 @@ def check_nuke_script_name() -> bool:
 
     return False
 
-
 def check_project_exists() -> bool:
     if tde4.getProjectPath():
         return True
@@ -71,6 +71,20 @@ def check_project_exists() -> bool:
     tde4.postQuestionRequester("Message", message, "OK")
 
     return False
+
+def check_and_remove_files_in_existed_path(path) -> bool:
+    folder_path = os.path.dirname(path)
+    if os.path.exists(folder_path):
+        if tde4.postQuestionRequester("Question", f"Path already exists: {folder_path}\n\n"
+                                                  f"Important: all the files inside this folder will be deleted.\n\n"
+                                                  f"Continue?", "Yes", "No"):
+            shutil.rmtree(folder_path)
+            os.mkdir(folder_path)
+            return True
+        else:
+            return False
+
+    return True
 
 
 # CALLBACKS
@@ -98,6 +112,9 @@ def button_clicked_callback(requester, widget, action) -> None:
                                             script_name=tde4.getWidgetValue(requester, "textfield_name"),
                                             dir_folder_is_version=True)
     LOGGER.info(f"nuke_script_path: {nuke_script_path}")
+
+    if not check_and_remove_files_in_existed_path(nuke_script_path):
+        return
 
     json_for_nuke_path = JsonForNuke().get_json_path()
     LOGGER.info(f"json_for_nuke_path: {json_for_nuke_path}")
@@ -222,6 +239,7 @@ class JsonForNuke:
     def get_json(self) -> dict:
         """
         {
+        "first_frame": 0,
         "cameras": [
             {
                 "first_frame": 1001,
@@ -234,18 +252,17 @@ class JsonForNuke:
                     },
                     "scale": 1.0
                 },
-                "camera": {
-                    "translate": {
-                        "x": [0.0, ...], "y": [0.0, ...], "z": [0.0, ...],
-                    },
-                    "rotate": {
-                        "x": [0.0, ...], "y": [0.0, ...], "z": [0.0, ...],
-                    },
-                    "focal": [0.0, ...],
-                    "haperture": 0.0,
-                    "vaperture": 0.0
+                "translate": {
+                    "x": [0.0, ...], "y": [0.0, ...], "z": [0.0, ...],
                 },
-                "nk_undistort_path": ".../Temp/undistort_for_CameraName.nk",
+                "rotate": {
+                    "x": [0.0, ...], "y": [0.0, ...], "z": [0.0, ...],
+                },
+                "focal": [0.0, ...],
+                "haperture": 0.0,
+                "vaperture": 0.0,
+                "name": "",
+                "undistort_script_path": ".../Temp/undistort_for_CameraName.nk",
                 "source_path": ".../source/source.####.exr"
             },
         ],
@@ -281,20 +298,23 @@ class JsonForNuke:
     }
         """
         JSON = {
+            "first_frame": self.get_first_frame(),
             "cameras": self.get_cameras_list(),
             "points": self.get_points_list(),
             "geo": self.get_geo_list(),
             "point_groups": self.get_point_group_list(),
             "3de4_project_path": tde4.getProjectPath()
         }
+        print(JSON["first_frame"])
         return JSON
 
     def get_camera_dict(self, camera) -> dict:
         offset = tde4.getCameraFrameOffset(camera)
+        camera_name = validName(tde4.getCameraName(camera))
 
         nk_undistort_path = os.path.join(  # STOP THERE: TEST CODE!
             tempfile.gettempdir(),
-            f"undistort_for_{validName(tde4.getCameraName(camera))}.nk"
+            f"undistort_for_{camera_name}.nk"
         )
         os.makedirs(os.path.dirname(nk_undistort_path), exist_ok=True)
         exportNukeDewarpNode(camera, offset, nk_undistort_path)
@@ -336,22 +356,21 @@ class JsonForNuke:
                 },
                 "scale": self.scene_scale
             },
-            "camera": {
-                "translate": {
-                    "x": camera_translate_x,
-                    "y": camera_translate_y,
-                    "z": camera_translate_z
-                },
-                "rotate": {
-                    "x": camera_rotate_x,
-                    "y": camera_rotate_y,
-                    "z": camera_rotate_z
-                },
-                "focal": focal,
-                "haperture": tde4.getLensFBackWidth(tde4.getCameraLens(camera)) * 10,
-                "vaperture": tde4.getLensFBackHeight(tde4.getCameraLens(camera)) * 10
+            "translate": {
+                "x": camera_translate_x,
+                "y": camera_translate_y,
+                "z": camera_translate_z
             },
-            "nk_undistort_path": nk_undistort_path,
+            "rotate": {
+                "x": camera_rotate_x,
+                "y": camera_rotate_y,
+                "z": camera_rotate_z
+            },
+            "focal": focal,
+            "haperture": tde4.getLensFBackWidth(tde4.getCameraLens(camera)) * 10,
+            "vaperture": tde4.getLensFBackHeight(tde4.getCameraLens(camera)) * 10,
+            "name": camera_name,
+            "undistort_script_path": nk_undistort_path,
             "source_path": tde4.getCameraPath(camera)
         }
 
@@ -360,7 +379,8 @@ class JsonForNuke:
     def get_cameras_list(self) -> list:
         cameras = []
         for camera in tde4.getCameraList():
-            cameras.append(self.get_camera_dict(camera))
+            if tde4.getCameraType(camera) == "SEQUENCE":
+                cameras.append(self.get_camera_dict(camera))
         return cameras
 
     def get_point_dict(self, point) -> dict:
@@ -467,6 +487,9 @@ class JsonForNuke:
 
         return geo_list
 
+    def get_first_frame(self) -> int:
+        return tde4.getCameraFrameOffset(tde4.getFirstCamera())
+
 def convertToAngles(r3d):
     """
     Converts a given 3x3 rotation matrix to Euler angles using the ZXY convention.
@@ -515,7 +538,9 @@ def validName(name):
     Returns:
         str: The cleaned name with spaces and '#' replaced by underscores.
     """
-    return name.replace(" ", "_").replace("#", "_")
+    for bad_symbol in [" ", "-", "#"]:
+        name = name.replace(bad_symbol, "_")
+    return name
 
 #
 # DO NOT ADD ANY CUSTOM CODE BEYOND THIS POINT!

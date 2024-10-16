@@ -80,6 +80,5 @@ def setup_or_get_logger(force_setup: bool = False, use_console_handler: bool = F
     sys.excepthook = _handle_exception
 
     logger.info(f"New {logger_name} logger set up.")
-    logger.info(f"New {logger_name} logger set up2.")
 
     return logger
