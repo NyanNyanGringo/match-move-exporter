@@ -51,10 +51,6 @@ def setup_or_get_logger(force_setup: bool = False, use_console_handler: bool = F
     logger = logging.getLogger(logger_name)
 
     # clear handlers
-
-    print(logger.hasHandlers())
-
-    # Если логгер уже имеет обработчики
     if logger.hasHandlers():
         if not force_setup:
             logger.info(f"{logger_name} returned.")

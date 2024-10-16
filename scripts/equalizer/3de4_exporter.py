@@ -7,8 +7,7 @@
 #
 # 3DE4.script.comment:	Easy and Fast Export for work.
 #
-
-
+import json
 import os
 import re
 import tempfile
@@ -17,17 +16,16 @@ import tde4
 from vl_sdv import rot3d, mat3d, VL_APPLY_ZXY, vec3d
 
 from lib.utilities.os_utilities import get_root_path
-from lib.utilities.cmd_utilities import run_terminal_command, correct_path_to_console_path
-from lib.utilities.nuke_utilities import get_export_pyscript, execute_nuke_script
+from lib.utilities.nuke_utilities import get_export_pyscript, execute_nuke_script, get_nuke_script_path
 from lib.utilities.log_utilities import setup_or_get_logger
+from lib.utilities.export_nuke_LD_3DE4_Lens_Distortion_Node import exportNukeDewarpNode
 
 
 LOGGER = setup_or_get_logger(force_setup=True, use_console_handler=False)
-
 NUKE_EXECUTABLE = os.getenv("NUKE_EXECUTABLE_PATH")
 
 
-# FUNCTIONS
+# CHECK FUNCTIONS
 
 
 def check_nuke_executable_path() -> bool:
@@ -44,83 +42,83 @@ def check_nuke_executable_path() -> bool:
 
     return True
 
+def check_camera_point_group() -> bool:
+    for point_group in tde4.getPGroupList():
+        if tde4.getPGroupType(point_group) == "CAMERA":
+            return True
+
+    message = "Error, there is no camera point group."
+    tde4.postQuestionRequester("Message", message, "Ok")
+    return False
+
+def check_nuke_script_name() -> bool:
+    nuke_script_name: str = tde4.getWidgetValue(requester, "textfield_name")
+
+    if nuke_script_name.strip():
+        return True
+
+    message = "Parameter name can't be empty."
+    tde4.postQuestionRequester("Message", message, "OK")
+
+    return False
+
+
+def check_project_exists() -> bool:
+    if tde4.getProjectPath():
+        return True
+
+    message = "Project doesn't exists."
+    tde4.postQuestionRequester("Message", message, "OK")
+
+    return False
+
 
 # CALLBACKS
 
 
 def button_clicked_callback(requester, widget, action) -> None:
-    print ("New callback from widget ",widget," received, action: ", action)
-    print ("Put your code here...")
+    LOGGER.info(f"New callback from widget {widget} received, action: {action}")
 
-    # checks
+    if not check_project_exists():
+        return
 
     if not check_nuke_executable_path():
         return
 
-    nuke_script_name: str = tde4.getWidgetValue(requester, "textfield_name")
-
-    if not nuke_script_name.strip():
-        message = "Parameter name can't be empty."
-        tde4.postQuestionRequester("Message", message, "OK")
+    if not check_nuke_script_name():
         return
 
-    camera_point_group = None
-    for point_group in tde4.getPGroupList():
-        if tde4.getPGroupType(point_group) == "CAMERA":
-            camera_point_group = point_group
-    if camera_point_group is None:
-        message = "Error, there is no camera point group."
-        tde4.postQuestionRequester("Message", message, "Ok")
+    if not check_camera_point_group():
+        return
 
-    # nuke_export_script
+    nuke_pyscript = get_export_pyscript()
+    LOGGER.info(f"nuke_pyscript: {nuke_pyscript}")
 
-    versions = re.findall("_v\d+(?:_.+)?", nuke_script_name)  # search versions with postfix
-    if versions:  # TODO: добавить аргумент из командной строки ONLY_VERSION_IN_DIR_NAME
-        dir_name = versions[-1]
-    else:
-        dir_name = nuke_script_name
-
-    nuke_export_script = os.path.join(
-        os.path.dirname(tde4.getProjectPath()),
-        dir_name,
-        nuke_script_name + ".nk"
-    )
-    os.makedirs(os.path.dirname(nuke_export_script), exist_ok=True)
+    nuke_script_path = get_nuke_script_path(folder_path=os.path.dirname(tde4.getProjectPath()),
+                                            script_name=tde4.getWidgetValue(requester, "textfield_name"),
+                                            dir_folder_is_version=True)
+    LOGGER.info(f"nuke_script_path: {nuke_script_path}")
 
     json_for_nuke_path = JsonForNuke().get_json_path()
+    LOGGER.info(f"json_for_nuke_path: {json_for_nuke_path}")
 
-    print("JSON CORRECT")
-
-    # JsonForNuke().test()
-    # print("done")
-
-    return
-
-    # export
-
-    # execute_nuke_script(NUKE_EXECUTABLE,  # nuke_exec_path
-    #                     get_export_pyscript(),  # py_script_path
-    #                     nuke_export_script,  # args: add nuke export-script path
-    #                     # json_for_nuke_path,  # args: add json data path
-    #                     PATHS_TO_ADD_TO_PYTHONPATH=[get_root_path()]  # kwargs: add access to lib folder for nuke
-    #                     )
-
-    # LOGGER.info("EQUALIZER STILL HAS LOGGING!")
+    execute_nuke_script(NUKE_EXECUTABLE,  # nuke_exec_path
+                        nuke_pyscript,  # py_script_path
+                        nuke_script_path,  # args: add nuke script path
+                        json_for_nuke_path,  # args: add json data path
+                        PATHS_TO_ADD_TO_PYTHONPATH=[get_root_path()]  # kwargs: add access to lib folder for nuke
+                        )
 
 def label_changed_callback(requester, widget, action) -> None:
-    print ("New callback from widget ",widget," received, action: ",action)
-    print ("Put your code here...")
-    return
-
+    LOGGER.info(f"New callback from widget {widget} received, action: {action}")
+    pass
 
 def _MatchMoveExporterUpdate(requester) -> None:
-    print ("New update callback received, put your code here...")
-    # LOGGER.info("EQUALIZER STILL HAS LOGGING!")
-    return
+    LOGGER.info("New update callback received, put your code here...")
+    pass
 
 
 # 3DE4 FUNCTIONS
-
 
 
 def get_obj_filepath(pg, model):
@@ -150,8 +148,7 @@ def get_obj_filepath(pg, model):
     model_name = validName(tde4.get3DModelName(pg, model))
 
     # Create the path in the temporary directory
-    temp_dir = tempfile.gettempdir()
-    obj_path = os.path.join(temp_dir, f"{model_name}.obj")
+    obj_path = os.path.join(tempfile.gettempdir(), f"{model_name}.obj")
 
     # Get the current camera and frame
     camera = tde4.getCurrentCamera()
@@ -206,7 +203,6 @@ def get_obj_filepath(pg, model):
     # Return the path to the .obj file
     return obj_path
 
-
 class JsonForNuke:
     def __init__(self):
         self.camera_point_group = [pg for pg in tde4.getPGroupList() if tde4.getPGroupType(pg) == "CAMERA"][0]
@@ -214,34 +210,95 @@ class JsonForNuke:
         self.scene_rotation = convertToAngles(tde4.getSceneRotation3D())
         self.scene_scale = tde4.getSceneScale3D()
 
-    # def test(self):
-    #     for pg in tde4.getPGroupList():  # pg = point group
-    #         for model in tde4.get3DModelList(pg, 0):  # 0 means selected only False
-    #             filepath = tde4.get3DModelFilepath(pg, model)
-    #             name = tde4.get3DModelName(pg, model)
-    #             # print(filepath)
-    #             print(f"start with {name}")
-    #             # print(get_obj_filepath(pg, model))
-    #             print(f"dont with {name}")
-    #             print()
+    def get_json_path(self):
 
-    def get_json_path(self):  # TODO
-        return self.get_json()
+        json_path = os.path.join(tempfile.gettempdir(), "json_for_nuke.json")
 
-    def get_json(self):
-        # TODO: undistort
-        # TODO: path to 3de4 project
-        # TODO: path to camera's sourse
+        with open(json_path, "w") as json_file:
+            json.dump(self.get_json(), json_file, indent=4)
+
+        return json_path
+
+    def get_json(self) -> dict:
+        """
+        {
+        "cameras": [
+            {
+                "first_frame": 1001,
+                "axis": {
+                    "translate": {
+                        "x": 0.0, "y": 0.0, "z": 0.0
+                    },
+                    "rotate": {
+                        "x": 0.0, "y": 0.0, "z": 0.0
+                    },
+                    "scale": 1.0
+                },
+                "camera": {
+                    "translate": {
+                        "x": [0.0, ...], "y": [0.0, ...], "z": [0.0, ...],
+                    },
+                    "rotate": {
+                        "x": [0.0, ...], "y": [0.0, ...], "z": [0.0, ...],
+                    },
+                    "focal": [0.0, ...],
+                    "haperture": 0.0,
+                    "vaperture": 0.0
+                },
+                "nk_undistort_path": ".../Temp/undistort_for_CameraName.nk",
+                "source_path": ".../source/source.####.exr"
+            },
+        ],
+        "points": [
+            {
+                "name": "00",
+                "x_pos": 0.0,
+                "y_pos": 0.0,
+                "z_pos": 0.0
+            },
+        ],
+        "geo": [".../Temp/SomeGeo.obj", ...],
+        "point_groups": [
+            {
+                "name": "pgroup_0",
+                "axis": {
+                    "translate": {
+                        "x": [0.0, ...], "y": [0.0, ...], "z": [0.0, ...],
+                    },
+                    "rotate": {
+                        "x": [0.0, ...], "y": [0.0, ...], "z": [0.0, ...],
+                    }
+                },
+                "points": [
+                    {
+                        "name": "00",
+                        "translate": {
+                            "x": 0.0, "y": 0.0, "z": 0.0,
+                        }
+                    }
+                ],
+        "3de4_project_path": ".../path/to/equalizer_project.3de"
+    }
+        """
         JSON = {
             "cameras": self.get_cameras_list(),
             "points": self.get_points_list(),
             "geo": self.get_geo_list(),
-            "point_groups": self.get_point_group_list()
+            "point_groups": self.get_point_group_list(),
+            "3de4_project_path": tde4.getProjectPath()
         }
-        print(JSON)
         return JSON
 
     def get_camera_dict(self, camera) -> dict:
+        offset = tde4.getCameraFrameOffset(camera)
+
+        nk_undistort_path = os.path.join(  # STOP THERE: TEST CODE!
+            tempfile.gettempdir(),
+            f"undistort_for_{validName(tde4.getCameraName(camera))}.nk"
+        )
+        os.makedirs(os.path.dirname(nk_undistort_path), exist_ok=True)
+        exportNukeDewarpNode(camera, offset, nk_undistort_path)
+
         camera_translate_x, camera_translate_y, camera_translate_z = [], [], []
         camera_rotate_x, camera_rotate_y, camera_rotate_z = [], [], []
         focal = []
@@ -265,7 +322,7 @@ class JsonForNuke:
             focal.append(f)
 
         camera_dict = {
-            "first_frame": tde4.getCameraFrameOffset(camera),
+            "first_frame": offset,
             "axis": {
                 "translate": {
                     "x": self.scene_translate[0],
@@ -293,7 +350,9 @@ class JsonForNuke:
                 "focal": focal,
                 "haperture": tde4.getLensFBackWidth(tde4.getCameraLens(camera)) * 10,
                 "vaperture": tde4.getLensFBackHeight(tde4.getCameraLens(camera)) * 10
-            }
+            },
+            "nk_undistort_path": nk_undistort_path,
+            "source_path": tde4.getCameraPath(camera)
         }
 
         return camera_dict
@@ -408,7 +467,6 @@ class JsonForNuke:
 
         return geo_list
 
-
 def convertToAngles(r3d):
     """
     Converts a given 3x3 rotation matrix to Euler angles using the ZXY convention.
@@ -429,7 +487,6 @@ def convertToAngles(r3d):
     rz = (rot[2] * 180.0) / 3.141592654
     return rx, ry, rz
 
-
 def angleMod360(prev_angle, current_angle):
     """
     Adjusts an angle to stay within the range of -180 to 180 degrees relative to a reference angle.
@@ -447,8 +504,6 @@ def angleMod360(prev_angle, current_angle):
     elif delta < -180.0:
         current_angle += 360.0
     return current_angle
-
-
 
 def validName(name):
     """

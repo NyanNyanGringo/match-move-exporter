@@ -3,7 +3,7 @@ import platform
 import tempfile
 
 from lib.utilities.cmd_utilities import run_terminal_command, correct_path_to_console_path
-
+from lib.utilities.os_utilities import get_version_with_postfix
 
 # private
 
@@ -40,29 +40,11 @@ def get_export_pyscript(return_file: bool = True) -> str:
     создается на этапе экспорта из 3DEqualizer или SynthEyes. Также, должен быть
     доступ к импорту файлов из папки lib.
     """
-    script = """
-import sys
+    this_path = os.path.dirname(os.path.abspath(__file__))
+    pyscript_path = os.path.join(this_path, "nuke_export_script.py")
+    with open(pyscript_path, "r") as file:
+        script = file.read()
 
-import nuke
-
-from lib.utilities.log_utilities import setup_or_get_logger
-
-
-LOGGER = setup_or_get_logger(force_setup=True, use_console_handler=True)
-LOGGER.info("Nuke works good!")
-NUKE_SCRIPT = sys.argv[1]
-
-
-nuke.scriptOpen(NUKE_SCRIPT)
-
-
-node = nuke.createNode("Blur")
-LOGGER.info(f"Blur node created: {node.name()}")
-
-
-nuke.scriptSave(NUKE_SCRIPT)
-
-"""
     if return_file:
         return _create_script_file(script)
     return script
@@ -123,3 +105,20 @@ def execute_nuke_script(nuke_exec_path: str,
     cwd = os.path.dirname(py_script_path)
 
     return run_terminal_command(command, cwd=cwd)
+
+
+def get_nuke_script_path(folder_path: str, script_name: str, dir_folder_is_version: bool = True) -> str:
+    if dir_folder_is_version:  # TODO: add env arg
+        dir_folder = get_version_with_postfix(script_name)
+    else:
+        dir_folder = script_name
+
+    nuke_script_path = os.path.join(
+        folder_path,
+        dir_folder,
+        script_name + ".nk"
+    )
+
+    os.makedirs(os.path.dirname(nuke_script_path), exist_ok=True)
+
+    return nuke_script_path
