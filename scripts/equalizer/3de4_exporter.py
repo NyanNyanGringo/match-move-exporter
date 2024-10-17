@@ -105,6 +105,8 @@ def button_clicked_callback(requester, widget, action) -> None:
     if not check_camera_point_group():
         return
 
+    # TODO: проверять, что во всех камерах source существует
+
     nuke_pyscript = get_export_pyscript()
     LOGGER.info(f"nuke_pyscript: {nuke_pyscript}")
 
@@ -242,31 +244,45 @@ class JsonForNuke:
         "first_frame": 0,
         "cameras": [
             {
-                "first_frame": 1001,
+                "first_frame": 0,
                 "axis": {
                     "translate": {
-                        "x": 0.0, "y": 0.0, "z": 0.0
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
                     },
-                    "rotate": {
-                        "x": 0.0, "y": 0.0, "z": 0.0
+                    "rotation": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
                     },
-                    "scale": 1.0
+                    "scale": 0.0
                 },
                 "translate": {
-                    "x": [0.0, ...], "y": [0.0, ...], "z": [0.0, ...],
+                    "xs": [0.0, ...],
+                    "ys": [0.0, ...],
+                    "zs": [0.0, ...]
                 },
                 "rotate": {
-                    "x": [0.0, ...], "y": [0.0, ...], "z": [0.0, ...],
+                    "xs": [0.0, ...],
+                    "ys": [0.0, ...],
+                    "zs": [0.0, ...]
                 },
                 "focal": [0.0, ...],
                 "haperture": 0.0,
                 "vaperture": 0.0,
                 "name": "",
                 "undistort_script_path": ".../Temp/undistort_for_CameraName.nk",
-                "source_path": ".../source/source.####.exr"
+                "source": {
+                    "path": ".../source/source.####.exr"
+                    "black_point": 0.0,
+                    "white_point": 0.0,
+                    "gamma": 0.0,
+                    "softclip": 0.0
+                }
             },
         ],
-        "points": [
+        "locators": [
             {
                 "name": "00",
                 "x_pos": 0.0,
@@ -289,9 +305,9 @@ class JsonForNuke:
                 "points": [
                     {
                         "name": "00",
-                        "translate": {
-                            "x": 0.0, "y": 0.0, "z": 0.0,
-                        }
+                        "x_pos": 0.0,
+                        "y_pos": 0.0,
+                        "z_pos": 0.0
                     }
                 ],
         "3de4_project_path": ".../path/to/equalizer_project.3de"
@@ -300,7 +316,7 @@ class JsonForNuke:
         JSON = {
             "first_frame": self.get_first_frame(),
             "cameras": self.get_cameras_list(),
-            "points": self.get_points_list(),
+            "locators": self.get_locators_list(),
             "geo": self.get_geo_list(),
             "point_groups": self.get_point_group_list(),
             "3de4_project_path": tde4.getProjectPath()
@@ -347,9 +363,9 @@ class JsonForNuke:
                 "translate": {
                     "x": self.scene_translate[0],
                     "y": self.scene_translate[1],
-                    "z": self.scene_translate[2]
+                    "z": self.scene_translate[2],
                 },
-                "rotate": {
+                "rotation": {
                     "x": self.scene_rotation[0],
                     "y": self.scene_rotation[1],
                     "z": self.scene_rotation[2]
@@ -357,21 +373,26 @@ class JsonForNuke:
                 "scale": self.scene_scale
             },
             "translate": {
-                "x": camera_translate_x,
-                "y": camera_translate_y,
-                "z": camera_translate_z
+                "xs": camera_translate_x,
+                "ys": camera_translate_y,
+                "zs": camera_translate_z
             },
             "rotate": {
-                "x": camera_rotate_x,
-                "y": camera_rotate_y,
-                "z": camera_rotate_z
+                "xs": camera_rotate_x,
+                "ys": camera_rotate_y,
+                "zs": camera_rotate_z
             },
             "focal": focal,
             "haperture": tde4.getLensFBackWidth(tde4.getCameraLens(camera)) * 10,
             "vaperture": tde4.getLensFBackHeight(tde4.getCameraLens(camera)) * 10,
             "name": camera_name,
             "undistort_script_path": nk_undistort_path,
-            "source_path": tde4.getCameraPath(camera)
+            "source": {
+                "path": tde4.getCameraPath(camera),
+                "black_white": tde4.getCamera8BitColorBlackWhite(camera),
+                "gamma": tde4.getCamera8BitColorGamma(camera),
+                "softclip": tde4.getCamera8BitColorSoftclip(camera)
+            }
         }
 
         return camera_dict
@@ -383,11 +404,11 @@ class JsonForNuke:
                 cameras.append(self.get_camera_dict(camera))
         return cameras
 
-    def get_point_dict(self, point) -> dict:
+    def get_locator_dict(self, point) -> dict:
         point_3d_pos = tde4.getPointCalcPosition3D(self.camera_point_group, point)
 
         point_dict = {
-            "name": tde4.getPointName(self.camera_point_group, point),
+            "name": validName(tde4.getPointName(self.camera_point_group, point)),
             "x_pos": point_3d_pos[0],
             "y_pos": point_3d_pos[1],
             "z_pos": point_3d_pos[2]
@@ -395,12 +416,12 @@ class JsonForNuke:
 
         return point_dict
 
-    def get_points_list(self) -> list:
+    def get_locators_list(self) -> list:
         points = []
 
         for point in tde4.getPointList(self.camera_point_group):
             if tde4.isPointCalculated3D(self.camera_point_group, point):
-                points.append(self.get_point_dict(point))
+                points.append(self.get_locator_dict(point))
 
         return points
 
@@ -430,11 +451,9 @@ class JsonForNuke:
             point_3d_pos = tde4.getPointCalcPosition3D(pg, point)
             point_dict = {
                 "name": validName(tde4.getPointName(pg, point)),
-                "translate": {
-                    "x": point_3d_pos[0],
-                    "y": point_3d_pos[1],
-                    "z": point_3d_pos[2]
-                }
+                "x_pos": point_3d_pos[0],
+                "y_pos": point_3d_pos[1],
+                "z_pos": point_3d_pos[2]
             }
             points.append(point_dict)
 

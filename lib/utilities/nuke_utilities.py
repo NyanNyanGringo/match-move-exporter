@@ -1,9 +1,20 @@
+try:  # let work nuke_utilities.py work in any context, not only inside nuke
+    import nuke
+except ImportError:
+    pass
+
 import os
+import re
 import platform
 import tempfile
 
 from lib.utilities.cmd_utilities import run_terminal_command, correct_path_to_console_path
 from lib.utilities.os_utilities import get_version_with_postfix
+
+
+MOV_EXTENSIONS = [".mov", ".mp4"]
+SEQUENCE_EXNTENSIONS = [".exr", ".dpx", ".png", ".tiff", ".psd", ".jpeg", ".jpg"]
+
 
 # private
 
@@ -122,3 +133,119 @@ def get_nuke_script_path(folder_path: str, script_name: str, dir_folder_is_versi
     os.makedirs(os.path.dirname(nuke_script_path), exist_ok=True)
 
     return nuke_script_path
+
+
+def _check_path_exists(file_path: str) -> bool:
+    if not file_path.replace(" ", ""):
+        return False
+
+    if get_extension(file_path) in MOV_EXTENSIONS and not os.path.exists(file_path):
+        return False
+
+    if get_extension(file_path) in SEQUENCE_EXNTENSIONS and not os.path.exists(os.path.dirname(file_path)):
+        return False
+
+    return True
+
+
+# START
+
+
+def check_file_is_sequence(file_path: str) -> bool:
+    no_extension = len(os.path.splitext(file_path)) == 1
+    if no_extension:
+        raise ValueError(f"Looks like {file_path} is folder, not file.")
+
+    if os.path.splitext(file_path)[-1] in MOV_EXTENSIONS:
+        return False
+
+    file_name = get_file_name(os.path.basename(file_path), ignore_version_and_postfix=False)
+
+    if os.path.exists(file_path):
+        files_in_dir = os.listdir(os.path.dirname(file_path))
+        matching_files_count = sum(1 for f in files_in_dir if file_name in f)
+    else:
+        matching_files_count = 42  # some random (or not random...) value
+
+    assert matching_files_count != 0, \
+        f"No files with name {file_name} found in: {os.path.dirname(file_path)}"
+
+    return matching_files_count > 1
+
+
+def get_extension(file_path: str) -> str:
+    """Return file extension with dot"""
+    try:
+        return os.path.splitext(file_path)[1]
+    except IndexError:
+        return ""
+
+
+def get_file_name(file_full_name: str, ignore_version_and_postfix: bool = True) -> str:
+    """Return file name without extension and version"""
+
+    # remove extension
+    file_name = os.path.splitext(file_full_name)[0]
+
+    # remove: %d, %00d, .##, _##
+    file_name = re.sub("%(\d+|)d", "", file_name)
+    file_name = re.sub("\.#+", "", file_name)
+    file_name = re.sub("_#+", "", file_name)
+
+    # remove version
+    if ignore_version_and_postfix:
+        file_name = re.sub("_v\d+(_.+|)", "", file_name)
+
+    # remove dots in the end if exists
+    file_name = re.sub("\.+$", "", file_name)
+    return re.sub("_+$", "", file_name)
+
+
+def import_file_as_read_node(file_path):
+    """
+
+    :param file_path:
+    :return: nuke.Node (Read)
+    """
+    if not _check_path_exists(file_path):
+        raise FileNotFoundError(f"File doesn't exists:\n\n{file_path}")
+
+    if get_extension(file_path) not in MOV_EXTENSIONS + SEQUENCE_EXNTENSIONS:
+        raise ValueError(f"File doesn't supported. Supported types: {MOV_EXTENSIONS + SEQUENCE_EXNTENSIONS}")
+
+    if check_file_is_sequence(file_path):
+
+        file_dir = os.path.dirname(file_path)
+        file_full_name = os.path.basename(file_path)
+        file_name = get_file_name(file_full_name, ignore_version_and_postfix=False)
+        file_extension = get_extension(file_full_name)
+
+        nuke_file_name = str()
+        for f in nuke.getFileNameList(file_dir):
+
+            if file_extension not in f:
+                continue
+            if file_name not in f:
+                continue
+            if "3de_bcompress" in f:
+                continue
+
+            nuke_file_name = f
+
+        assert nuke_file_name, f"Unsuspected Error!"
+        nuke_file_path = os.path.join(file_dir, nuke_file_name).replace("\\", "/")
+
+        regexp_pattern = r" \d+-\d+$"
+        more_than_one_file_in_sequence = re.findall(regexp_pattern, nuke_file_name)
+        if more_than_one_file_in_sequence:
+            frame_range = re.findall(regexp_pattern, nuke_file_name)[0]
+            read_node = nuke.nodes.Read(file=re.split(regexp_pattern, nuke_file_path)[0],
+                                        first=frame_range.split("-")[0],
+                                        last=frame_range.split("-")[1])
+        else:
+            read_node = nuke.createNode('Read', "file {" + nuke_file_path + "}", inpanel=False)
+
+    else:
+        read_node = nuke.createNode('Read', "file {" + file_path + "}", inpanel=False)
+
+    return read_node
