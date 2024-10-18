@@ -248,4 +248,6 @@ def import_file_as_read_node(file_path):
     else:
         read_node = nuke.createNode('Read', "file {" + file_path + "}", inpanel=False)
 
+    read_node["auto_alpha"].setValue(1)
+
     return read_node

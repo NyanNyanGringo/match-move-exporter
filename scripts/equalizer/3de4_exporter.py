@@ -75,9 +75,10 @@ def check_project_exists() -> bool:
 def check_and_remove_files_in_existed_path(path) -> bool:
     folder_path = os.path.dirname(path)
     if os.path.exists(folder_path):
-        if tde4.postQuestionRequester("Question", f"Path already exists: {folder_path}\n\n"
+        request = tde4.postQuestionRequester("Question", f"Path already exists: {folder_path}\n\n"
                                                   f"Important: all the files inside this folder will be deleted.\n\n"
-                                                  f"Continue?", "Yes", "No"):
+                                                  f"Continue?", "Yes", "No")
+        if request == 1:  # 1 is True, 2 is False
             shutil.rmtree(folder_path)
             os.mkdir(folder_path)
             return True
@@ -241,7 +242,12 @@ class JsonForNuke:
     def get_json(self) -> dict:
         """
         {
+        "program": "3DE4" or "SynthEyes"
         "first_frame": 0,
+        "fps": 0,
+        "width": 0),
+        "height": 0,
+        "range": [0, 0],
         "cameras": [
             {
                 "first_frame": 0,
@@ -271,7 +277,10 @@ class JsonForNuke:
                 "focal": [0.0, ...],
                 "haperture": 0.0,
                 "vaperture": 0.0,
-                "name": "",
+                "    if intermediate_name:
+        filepath += f"undistort_{intermediate_name}/"
+    else:
+        filepath += "undistort/"": "",
                 "undistort_script_path": ".../Temp/undistort_for_CameraName.nk",
                 "source": {
                     "path": ".../source/source.####.exr"
@@ -282,24 +291,16 @@ class JsonForNuke:
                 }
             },
         ],
-        "locators": [
-            {
-                "name": "00",
-                "x_pos": 0.0,
-                "y_pos": 0.0,
-                "z_pos": 0.0
-            },
-        ],
-        "geo": [".../Temp/SomeGeo.obj", ...],
         "point_groups": [
             {
+                "type": "CAMERA" or "OBJECT",
                 "name": "pgroup_0",
                 "axis": {
                     "translate": {
-                        "x": [0.0, ...], "y": [0.0, ...], "z": [0.0, ...],
+                        "xs": [0.0, ...], "ys": [0.0, ...], "zs": [0.0, ...],
                     },
                     "rotate": {
-                        "x": [0.0, ...], "y": [0.0, ...], "z": [0.0, ...],
+                        "xs": [0.0, ...], "ys": [0.0, ...], "zs": [0.0, ...],
                     }
                 },
                 "points": [
@@ -308,20 +309,27 @@ class JsonForNuke:
                         "x_pos": 0.0,
                         "y_pos": 0.0,
                         "z_pos": 0.0
-                    }
+                    },
+                "geo": [".../Temp/SomeGeo.obj", ...]
                 ],
         "3de4_project_path": ".../path/to/equalizer_project.3de"
     }
         """
+        first_camera = tde4.getFirstCamera()
         JSON = {
-            "first_frame": self.get_first_frame(),
+            "program": "3DE4",
+
+            "first_frame": tde4.getCameraFrameOffset(first_camera),
+            "fps": tde4.getCameraFPS(first_camera),
+            "width": tde4.getCameraImageWidth(first_camera),
+            "height": tde4.getCameraImageHeight(first_camera),
+            "range": tde4.getCameraCalculationRange(first_camera),
+
             "cameras": self.get_cameras_list(),
-            "locators": self.get_locators_list(),
-            "geo": self.get_geo_list(),
             "point_groups": self.get_point_group_list(),
             "3de4_project_path": tde4.getProjectPath()
         }
-        print(JSON["first_frame"])
+
         return JSON
 
     def get_camera_dict(self, camera) -> dict:
@@ -358,7 +366,6 @@ class JsonForNuke:
             focal.append(f)
 
         camera_dict = {
-            "first_frame": offset,
             "axis": {
                 "translate": {
                     "x": self.scene_translate[0],
@@ -402,28 +409,8 @@ class JsonForNuke:
         for camera in tde4.getCameraList():
             if tde4.getCameraType(camera) == "SEQUENCE":
                 cameras.append(self.get_camera_dict(camera))
+                # cameras.append(self.get_camera_dict(camera))  # for test
         return cameras
-
-    def get_locator_dict(self, point) -> dict:
-        point_3d_pos = tde4.getPointCalcPosition3D(self.camera_point_group, point)
-
-        point_dict = {
-            "name": validName(tde4.getPointName(self.camera_point_group, point)),
-            "x_pos": point_3d_pos[0],
-            "y_pos": point_3d_pos[1],
-            "z_pos": point_3d_pos[2]
-        }
-
-        return point_dict
-
-    def get_locators_list(self) -> list:
-        points = []
-
-        for point in tde4.getPointList(self.camera_point_group):
-            if tde4.isPointCalculated3D(self.camera_point_group, point):
-                points.append(self.get_locator_dict(point))
-
-        return points
 
     def get_point_group_dict(self, pg, camera) -> dict:
         # collect translate and rotate of point group for Axis
@@ -460,21 +447,26 @@ class JsonForNuke:
         # collect geo of point group
         geo = []
         for model in tde4.get3DModelList(pg, 0):  # 0 means selected only False
+
+            if not tde4.get3DModelVisibleFlag(pg, model):
+                continue
+
             filepath = get_obj_filepath(pg, model)
             geo.append(filepath)
 
         point_group_dict = {
+            "type": tde4.getPGroupType(pg),
             "name": validName(tde4.getPGroupName(pg)),
             "axis": {
                 "translate": {
-                    "x": axis_translate_x,
-                    "y": axis_translate_y,
-                    "z": axis_translate_z
+                    "xs": axis_translate_x,
+                    "ys": axis_translate_y,
+                    "zs": axis_translate_z
                 },
                 "rotate": {
-                    "x": axis_rotate_x,
-                    "y": axis_rotate_y,
-                    "z": axis_rotate_z
+                    "xs": axis_rotate_x,
+                    "ys": axis_rotate_y,
+                    "zs": axis_rotate_z
                 }
             },
             "points": points,
@@ -487,27 +479,10 @@ class JsonForNuke:
 
         camera = tde4.getCurrentCamera()  # get any camera
         for point_group in tde4.getPGroupList():
-            if tde4.getPGroupType(point_group) == "OBJECT" and camera is not None:
+            if camera is not None:
                 point_groups.append(self.get_point_group_dict(point_group, camera))
 
         return point_groups
-
-    def get_geo_list(self) -> list:
-        geo_list = []
-
-        for pg in tde4.getPGroupList():  # pg = point group
-
-            if not tde4.getPGroupType(pg) == "CAMERA":
-                continue
-
-            for model in tde4.get3DModelList(pg, 0):  # 0 means selected only False
-                filepath = get_obj_filepath(pg, model)
-                geo_list.append(filepath)
-
-        return geo_list
-
-    def get_first_frame(self) -> int:
-        return tde4.getCameraFrameOffset(tde4.getFirstCamera())
 
 def convertToAngles(r3d):
     """
