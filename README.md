@@ -19,12 +19,12 @@ Export **all** 3D tracking data from 3DEqualizer in **one click**:
 ### Installation (for artist):
 
 1. Download the repository to any folder.
-2. In `launch_3de4.cmd` file fill EQUALIZER_EXECUTABLE_PATH and NUKE_EXECUTABLE_PATH
+2. In `launcher/launch_3de4.cmd` file fill EQUALIZER_EXECUTABLE_PATH and NUKE_EXECUTABLE_PATH
 
 
 ### Usage (for artist):
 
-Launch `launch_3de4.cmd` and find "MMExporter/MatchMove Exporter" action and run.
+Launch `launcher/launch_3de4.cmd` and find "MMExporter/MatchMove Exporter" action and run.
 
 
 ### 3DEqualizer knowledge base:

@@ -2,9 +2,6 @@
 DO NOT IMPORT THIS FILE
 
 This file is part of nuke_utilities. It used in get_export_pyscript() function.
-
-# TODO: make sure 3DE4 Undistort nodes exists in Nuke
-# TODO: checkbox "collect sources"
 """
 import nuke
 
