@@ -243,7 +243,7 @@ class JsonForNuke:
         """
         {
         "program": "3DE4" or "SynthEyes"
-        "first_frame": 0,
+        "offset": 0,
         "fps": 0,
         "width": 0),
         "height": 0,
@@ -319,7 +319,7 @@ class JsonForNuke:
         JSON = {
             "program": "3DE4",
 
-            "first_frame": tde4.getCameraFrameOffset(first_camera),
+            "offset": tde4.getCameraFrameOffset(first_camera),
             "fps": tde4.getCameraFPS(first_camera),
             "width": tde4.getCameraImageWidth(first_camera),
             "height": tde4.getCameraImageHeight(first_camera),

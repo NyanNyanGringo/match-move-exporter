@@ -34,12 +34,16 @@ with open(sys.argv[2], "r") as file:
 
 if os.getenv("DEV"):
     range_ = JSON_DATA["range"]
-    JSON_DATA["range"] = [range_[0], 10]
+    JSON_DATA["range"] = [range_[0], 2]
     del range_
+
+OFFSET = JSON_DATA["offset"]
+FIRST_FRAME = JSON_DATA["range"][0] + OFFSET - 1
+LAST_FRAME = JSON_DATA["range"][1] + OFFSET - 1
 
 def animate_xyz_knob_values(knob: nuke.XYZ_Knob,
                             values: [[], [], []],  # [[x], [y], [z]]
-                            first_frame: int = 1001):
+                            first_frame: int = OFFSET):
     knob.setAnimated()
     for i, (x, y, z) in enumerate(zip(*values)):
         frame = first_frame + i
@@ -49,7 +53,7 @@ def animate_xyz_knob_values(knob: nuke.XYZ_Knob,
 
 def animate_array_knob_values(knob: nuke.Array_Knob,
                               values: [],
-                              first_frame: int = 1001):
+                              first_frame: int = OFFSET):
     knob.setAnimated()
     for i, value in enumerate(values):
         frame = first_frame + i
@@ -76,7 +80,7 @@ def get_camera(camera_data: dict) -> nuke.Node:
     # don't implement now.
 
     # create camera, set knob values
-    camera = nuke.nodes.Camera()
+    camera = create_node("Camera3")
     camera["label"].setValue(camera_data['name'])
 
     for knob_name in ["translate", "rotate"]:
@@ -230,21 +234,17 @@ def get_point_groups() -> [nuke.Node]:
 
 
 def set_root_settings():
-    offset = JSON_DATA["first_frame"]
     fps = JSON_DATA["fps"]
     width = JSON_DATA["width"]
     height = JSON_DATA["height"]
-    range_: list = JSON_DATA["range"]
-    first_frame = range_[0] + offset - 1
-    last_frame = range_[1] + offset - 1
 
     format_name = f"{width}x{height}"
     nuke.addFormat(f"{width} {height} 1.0 {format_name}")
     nuke.Root()["format"].setValue(format_name)
 
     nuke.Root()["fps"].setValue(fps)
-    nuke.Root()["first_frame"].setValue(first_frame)
-    nuke.Root()["last_frame"].setValue(last_frame)
+    nuke.Root()["first_frame"].setValue(FIRST_FRAME)
+    nuke.Root()["last_frame"].setValue(LAST_FRAME)
     nuke.Root()["lock_range"].setValue(True)
 
 def create_stmap_node() -> nuke.Node:
@@ -281,8 +281,8 @@ def create_write_dailies(intermediate_name: str = None) -> nuke.Node:
     write["mov64_fps"].setExpression("[value root.fps]")
     write["mov64_bitrate"].setValue(20000)
     write["create_directories"].setValue(True)
-    write["first"].setExpression("first_frame")
-    write["last"].setExpression("last_frame")
+    write["first"].setValue(FIRST_FRAME)
+    write["last"].setValue(LAST_FRAME)
     write["use_limit"].setValue(True)
     return write
 
@@ -297,25 +297,45 @@ def create_write_stmap(intermediate_name: str = None) -> nuke.Node:
     write["file_type"].setValue("exr")
     write["compression"].setValue("Zip")
     write["create_directories"].setValue(True)
-    write["first"].setExpression("first_frame")
-    write["last"].setExpression("last_frame")
+    write["first"].setValue(FIRST_FRAME)
+    write["last"].setValue(LAST_FRAME)
     write["use_limit"].setValue(True)
     return write
+
 
 def create_write_undistort(intermediate_name: str = None) -> nuke.Node:
     write = create_node("Write")
     filepath = "[file dirname [value root.name]]/"
     if intermediate_name:
         filepath += f"{intermediate_name}/"
-    filepath += "undistort/[file rootname [basename [value root.name]]].####.jpeg"
+    filepath += "undistort/[file rootname [basename [value root.name]]].####.exr"
     write["file"].setValue(filepath)
-    write["colorspace"].setValue("sRGB")
-    write["file_type"].setValue("jpeg")
+    write["colorspace"].setValue("linear")
+    write["file_type"].setValue("exr")
+    write["compression"].setValue("DWAA")
     write["create_directories"].setValue(True)
-    write["first"].setExpression("first_frame")
-    write["last"].setExpression("last_frame")
+    write["first"].setValue(FIRST_FRAME)
+    write["last"].setValue(LAST_FRAME)
     write["use_limit"].setValue(True)
     return write
+
+def create_write_geo(file_type: str, intermediate_name: str = None) -> nuke.Node:
+    if not file_type in ["abc", "fbx"]:
+        raise ValueError("File type must be abc or fbx.")
+
+    write_geo = create_node("WriteGeo")
+    filepath = "[file dirname [value root.name]]/"
+    if intermediate_name:
+        filepath += f"{intermediate_name}/"
+    filepath += f"[file rootname [basename [value root.name]]].{file_type}"
+    write_geo["file"].setValue(filepath)
+    write_geo["first"].setValue(FIRST_FRAME)
+    write_geo["last"].setValue(LAST_FRAME)
+    write_geo["use_limit"].setValue(True)
+    write_geo["file_type"].setValue(file_type)
+    if file_type == "fbx":
+        write_geo["animateMeshVertices"].setValue(True)
+    return write_geo
 
 def render_dailies(from_node: nuke.Node, intermediate_name: str = None, cleanup_after_render: bool = False) -> None:
     crop = create_crop()
@@ -328,6 +348,12 @@ def render_dailies(from_node: nuke.Node, intermediate_name: str = None, cleanup_
     reformat.setInput(0, crop_reformat)
     crop.setInput(0, reformat)
     write.setInput(0, crop)
+
+    x_pos, y_pos, space = from_node.xpos(), from_node.ypos(), 1
+    crop_reformat.setXYpos(x_pos, y_pos + 100 * space)
+    reformat.setXYpos(x_pos, y_pos + 130 * space)
+    crop.setXYpos(x_pos, y_pos + 173 * space)
+    write.setXYpos(x_pos, y_pos + 205 * space)
 
     nuke.scriptSave(NUKE_SCRIPT)  # save to crete file
 
@@ -369,7 +395,20 @@ def render_undistort(from_node: nuke.Node, intermediate_name: str = None) -> Non
     for n in nodes_to_cleanup:
         nuke.delete(n)
 
-def shuffle_and_complete_nodes(nodes_data) -> dict:
+def render_geo(from_node: nuke.Node, intermediate_name: str = None) -> None:
+    write_geo_fbx = create_write_geo("fbx", intermediate_name)
+    write_geo_abc = create_write_geo("abc", intermediate_name)
+
+    write_geo_fbx.setInput(0, from_node)
+    write_geo_abc.setInput(0, from_node)
+
+    nuke.render(write_geo_fbx)
+    nuke.render(write_geo_abc)
+
+    for n in [write_geo_fbx, write_geo_abc]:
+        nuke.delete(n)
+
+def shuffle_and_render_nodes(nodes_data) -> None:
     """
     nodes_data = {
         "read_groups": [
@@ -383,80 +422,84 @@ def shuffle_and_complete_nodes(nodes_data) -> dict:
             }
         },
         "geo_nodes: [nuke.Node, ...]
-        # next pairs will be also returned after function completed
         ""
     }
-    # TODO: wrapper for node shuffling, that takes list with NodeObjects (node, node_height, etc.)
     """
+    # scene + geo nodes
     scene = create_node("Scene")
     scene.setXYpos(0, 0)
     for i, geo_node in enumerate(nodes_data["geo_nodes"]):
         scene.setInput(i, geo_node)
         geo_node.setXYpos(i * 150 * -1 - 10, -100)  # -10 is offset to align to scene node
 
+    # create read groups
     x_offset = 0
     for index, read_group in enumerate(nodes_data["read_groups"]):
-        scanline = create_node("ScanlineRender", knobs={"motion_vectors_type": "off", "overscan": 500})
-        crop = create_crop()
-        merge = create_node("Merge2", knobs={"bbox": "B"})
-
-        camera = read_group["camera"]
-        read = read_group["read"]
-        color_nodes = read_group["color_nodes"]
-        undistort = read_group["undistort"]
-
         x_pos, y_pos = 200 + x_offset, -100
 
+        # read
+        read = read_group["read"]
         read.setXYpos(x_pos, y_pos)
 
+        # crop
+        crop = create_crop()
         crop.setInput(0, read)
-        y_pos += 100
+        y_pos += 86
         crop.setXYpos(x_pos, y_pos)
 
+        # color nodes
+        color_nodes = read_group["color_nodes"]
         current_node = None
         previous_node = crop
         for i in range(0, len(color_nodes)):
             current_node = color_nodes[i]
 
             if i == 0:
-                y_pos += 160
+                y_pos += 120
             else:
                 previous_node = color_nodes[i-1]
 
             current_node.setInput(0, previous_node)
             current_node.setXYpos(x_pos, y_pos)
-
             y_pos += 26
 
+        # undistort
+        undistort = read_group["undistort"]
         undistort.setInput(0, current_node)
         y_pos += 60
         undistort.setXYpos(x_pos, y_pos)
 
-        dot = create_node("Dot", undistort)
+        # dot + scanline + camera + merge
         y_pos += 120
+
+        dot = create_node("Dot", undistort)
         dot.setXYpos(x_pos + 34, y_pos + 4)
 
+        camera = read_group["camera"]
+        camera.setXYpos(x_pos - 400, y_pos - 20)
+
+        scanline = create_node("ScanlineRender", knobs={"motion_vectors_type": "off", "overscan": 500})
         scanline.setInput(0, dot)
         scanline.setInput(1, scene)
         scanline.setInput(2, camera)
         scanline.setXYpos(x_pos - 210, y_pos)
 
-        camera.setXYpos(x_pos - 400, y_pos - 20)
-
+        merge = create_node("Merge2", knobs={"bbox": "B"})
         merge.setInput(0, dot)
         merge.setInput(1, scanline)
-        y_pos += 80
-        merge.setXYpos(x_pos, y_pos)
+        merge.setXYpos(x_pos, y_pos + 80)
 
+        # offset for next read_group
         x_offset += 500
 
+        # render writes
         intermediate_name = read_group["name"] if index else None
-        LOGGER.info(f"intermediate_name: {intermediate_name}")
         render_stmap(from_node=crop, undistort=undistort, intermediate_name=intermediate_name)
         render_undistort(from_node=undistort, intermediate_name=intermediate_name)
         render_dailies(from_node=merge, intermediate_name=intermediate_name)
-
-    return nodes_data
+        scene.setInput(scene.inputs(), camera)
+        render_geo(from_node=scene, intermediate_name=intermediate_name)
+        scene.setInput(scene.inputs()-1, None)
 
 def start():
 
@@ -489,9 +532,12 @@ def start():
         "read_groups": read_groups,
         "geo_nodes": point_groups
     }
-    shuffle_and_complete_nodes(nodes_data)
+    shuffle_and_render_nodes(nodes_data)
 
-    # delete viewer
+    [nuke.delete(node) for node in nuke.allNodes() if node.Class() == "Viewer"]
+
+    if JSON_DATA["program"] == "3DE4":
+        shutil.copy2(JSON_DATA["3de4_project_path"], os.path.dirname(NUKE_SCRIPT))
 
     nuke.scriptSave(NUKE_SCRIPT)
 
@@ -510,31 +556,3 @@ open_in_explorer(NUKE_SCRIPT)
 #
 # TODO: make sure 3DE4 Undistort nodes exists in Nuke
 # TODO: checkbox "collect sources"
-
-
-# set cut_paste_input [stack 0]
-# version 14.0 v7
-# push $cut_paste_input
-# Grade {
-#  gamma 1.5
-#  black_clamp false
-#  name Grade2
-#  selected true
-#  xpos 440
-#  ypos 103
-# }
-# SoftClip {
-#  softclip_min 0.5
-#  softclip_max 16
-#  name SoftClip1
-#  selected true
-#  xpos 440
-#  ypos 129
-# }
-# Colorspace {
-#  colorspace_in sRGB
-#  name Colorspace1
-#  selected true
-#  xpos 440
-#  ypos 155
-# }
