@@ -1,3 +1,10 @@
+"""
+code fully copied from 3DE4 7.1 plugins: "export_nuke_LD_3DE4_Lens_Distortion_Node.py".
+Function exportNukeDewarpNode helps to create undistort node for Nuke.
+
+Warning: first part of script which contains 3DE4 scripting tags was deleted.
+If you have to update this script please do the same to avoid some issues.
+"""
 import tde4
 import string
 import re

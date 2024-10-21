@@ -2,24 +2,31 @@
 DO NOT IMPORT THIS FILE
 
 This file is part of nuke_utilities. It used in get_export_pyscript() function.
-"""
-import os.path
-import shutil
 
+# TODO: make sure 3DE4 Undistort nodes exists in Nuke
+# TODO: checkbox "collect sources"
+"""
 import nuke
 
+import os
+import shutil
 import sys
 import json
 from random import random
 
 from lib.utilities.log_utilities import setup_or_get_logger
 from lib.utilities.os_utilities import open_in_explorer
-from lib.utilities.nuke_utilities import import_file_as_read_node
+from lib.utilities.nuke_utilities import import_file_as_read_node, import_nodes_from_script, \
+    animate_array_knob_values, animate_xyz_knob_values
 
 
-# config start
+# config
+
+
 GEO_FOLDER_NAME = "geo"
-# config end
+
+
+# setup logger from lib
 
 
 LOGGER = setup_or_get_logger(force_setup=True, use_console_handler=True)
@@ -28,94 +35,35 @@ if os.getenv("DEV"):
 else:
     LOGGER.info(f"Nuke started.")
 
+
+# get nuke script and json data from system arguments
+
+
 NUKE_SCRIPT = sys.argv[1]
 with open(sys.argv[2], "r") as file:
     JSON_DATA = json.load(file)
+
+# reduce the range of frames when develop
+
 
 if os.getenv("DEV"):
     range_ = JSON_DATA["range"]
     JSON_DATA["range"] = [range_[0], 2]
     del range_
 
+
+# some global variables
+
+
 OFFSET = JSON_DATA["offset"]
 FIRST_FRAME = JSON_DATA["range"][0] + OFFSET - 1
 LAST_FRAME = JSON_DATA["range"][1] + OFFSET - 1
 
-def animate_xyz_knob_values(knob: nuke.XYZ_Knob,
-                            values: [[], [], []],  # [[x], [y], [z]]
-                            first_frame: int = OFFSET):
-    knob.setAnimated()
-    for i, (x, y, z) in enumerate(zip(*values)):
-        frame = first_frame + i
-        knob.setValueAt(x, frame, 0)  # x
-        knob.setValueAt(y, frame, 1)  # y
-        knob.setValueAt(z, frame, 2)  # z
 
-def animate_array_knob_values(knob: nuke.Array_Knob,
-                              values: [],
-                              first_frame: int = OFFSET):
-    knob.setAnimated()
-    for i, value in enumerate(values):
-        frame = first_frame + i
-        knob.setValueAt(value, frame)
-
-def import_nodes_from_script(script_path: str) -> [nuke.Node]:
-    previous_all_nodes = nuke.allNodes()
-    nuke.scriptReadFile(script_path)
-    return list(set(nuke.allNodes()) - set(previous_all_nodes))
+# nodes functions
 
 
-def get_undistort_from_script(script_path: str) -> [nuke.Node]:
-    [n.setSelected(False) for n in nuke.allNodes()]
-    undistorts = import_nodes_from_script(script_path)
-    assert len(undistorts) == 1, f"Inside {script_path} supposed to be one node!"
-    undistort = undistorts[0]
-    undistort["label"].setValue(undistort.name().replace("LD_3DE4_", ""))
-    undistort.setName("UNDISTORT")
-    return undistorts
-
-def get_camera(camera_data: dict) -> nuke.Node:
-    # create axis
-    # PS: I haven't seen situation when axis needed -
-    # don't implement now.
-
-    # create camera, set knob values
-    camera = create_node("Camera3")
-    camera["label"].setValue(camera_data['name'])
-
-    for knob_name in ["translate", "rotate"]:
-        animate_xyz_knob_values(knob=camera[knob_name],
-                                values=[
-                                    camera_data[knob_name]["xs"],
-                                    camera_data[knob_name]["ys"],
-                                    camera_data[knob_name]["zs"]
-                                ])
-    animate_array_knob_values(knob=camera["focal"],
-                              values=camera_data["focal"])
-    camera["haperture"].setValue(camera_data["haperture"])
-    camera["vaperture"].setValue(camera_data["vaperture"])
-
-    return camera
-
-def create_grade_node(camera_data: dict, connect_to: nuke.Node = None) -> nuke.Node:
-    grade = nuke.nodes.Grade()
-    if connect_to:
-        grade.setInput(0, connect_to)
-    grade["blackpoint"].setValue(camera_data["source"]["black_white"][0])
-    grade["whitepoint"].setValue(camera_data["source"]["black_white"][1])
-    grade["gamma"].setValue(camera_data["source"]["gamma"])
-    return grade
-
-def create_soft_clip_node(camera_data: dict, connect_to: nuke.Node = None) -> nuke.Node:
-    softclip = nuke.nodes.SoftClip()
-    if connect_to:
-        softclip.setInput(0, connect_to)
-    softclip["softclip_min"].setValue(1 - camera_data["source"]["softclip"])
-    softclip["softclip_max"].setValue(16)
-    return softclip
-
-
-def create_node(class_: str, connect_to: nuke.Node = None, knobs: dict = None) -> nuke.Node:
+def _create_node(class_: str, connect_to: nuke.Node = None, knobs: dict = None) -> nuke.Node:
     try:
         node = getattr(nuke.nodes, class_)()
     except AttributeError:
@@ -133,8 +81,58 @@ def create_node(class_: str, connect_to: nuke.Node = None, knobs: dict = None) -
 
     return node
 
+def _get_undistort_from_script(script_path: str) -> [nuke.Node]:
+    [n.setSelected(False) for n in nuke.allNodes()]
+    undistorts = import_nodes_from_script(script_path)
+    assert len(undistorts) == 1, f"Inside {script_path} supposed to be one node!"
+    undistort = undistorts[0]
+    undistort["label"].setValue(undistort.name().replace("LD_3DE4_", ""))
+    undistort.setName("UNDISTORT")
+    return undistorts
 
-def create_read_geo_node(geo_path: str) -> nuke.Node:
+def _get_camera(camera_data: dict) -> nuke.Node:
+    # create axis
+    # PS: I haven't seen situation when axis needed -
+    # don't implement now.
+
+    # create camera, set knob values
+    camera = _create_node("Camera3")
+    camera["label"].setValue(camera_data['name'])
+
+    for knob_name in ["translate", "rotate"]:
+        animate_xyz_knob_values(knob=camera[knob_name],
+                                values=[
+                                    camera_data[knob_name]["xs"],
+                                    camera_data[knob_name]["ys"],
+                                    camera_data[knob_name]["zs"]
+                                ],
+                                first_frame=OFFSET)
+    animate_array_knob_values(knob=camera["focal"],
+                              values=camera_data["focal"],
+                              first_frame=OFFSET)
+    camera["haperture"].setValue(camera_data["haperture"])
+    camera["vaperture"].setValue(camera_data["vaperture"])
+
+    return camera
+
+def _create_grade_node(camera_data: dict, connect_to: nuke.Node = None) -> nuke.Node:
+    grade = _create_node("Grade")
+    if connect_to:
+        grade.setInput(0, connect_to)
+    grade["blackpoint"].setValue(camera_data["source"]["black_white"][0])
+    grade["whitepoint"].setValue(camera_data["source"]["black_white"][1])
+    grade["gamma"].setValue(camera_data["source"]["gamma"])
+    return grade
+
+def _create_soft_clip_node(camera_data: dict, connect_to: nuke.Node = None) -> nuke.Node:
+    softclip = nuke.nodes.SoftClip()
+    if connect_to:
+        softclip.setInput(0, connect_to)
+    softclip["softclip_min"].setValue(1 - camera_data["source"]["softclip"])
+    softclip["softclip_max"].setValue(16)
+    return softclip
+
+def _create_read_geo_node(geo_path: str) -> nuke.Node:
     read_geo = nuke.createNode('ReadGeo2', "file {" + geo_path + "}", inpanel=False)
     read_geo["file"].setValue(f"[file dirname [value root.name]]/{GEO_FOLDER_NAME}/{os.path.basename(geo_path)}")
 
@@ -143,8 +141,7 @@ def create_read_geo_node(geo_path: str) -> nuke.Node:
 
     return read_geo
 
-
-def create_read_geo_nodes(geo_paths: list) -> list:
+def _create_read_geo_nodes(geo_paths: list) -> list:
     read_geo_nodes = []
 
     common_geo_path = os.path.join(os.path.dirname(NUKE_SCRIPT), GEO_FOLDER_NAME)
@@ -154,13 +151,12 @@ def create_read_geo_nodes(geo_paths: list) -> list:
             LOGGER.info(f"Geo doesn't exists: {geo_path}")
             continue
         new_geo_path = shutil.copy2(geo_path, common_geo_path)
-        read_geo = create_read_geo_node(new_geo_path)
+        read_geo = _create_read_geo_node(new_geo_path)
         read_geo_nodes.append(read_geo)
 
     return read_geo_nodes
 
-
-def create_group_for_points(name: str) -> nuke.Node:
+def _create_group_for_points(name: str) -> nuke.Node:
     group = nuke.nodes.Group()
     group.setName(name)
     slider_knob = nuke.Double_Knob("sphere_radius", "Sphere Radius:")
@@ -168,18 +164,17 @@ def create_group_for_points(name: str) -> nuke.Node:
     group.addKnob(slider_knob)
     return group
 
-
-def get_point_groups() -> [nuke.Node]:
+def _get_point_groups() -> [nuke.Node]:
     # TODO: shuffle all the nodes + backdrop
     point_groups = []
 
     for point_group_data in JSON_DATA["point_groups"]:
         point_group_type = point_group_data["type"]  # CAMERA or OBJECT
         name = f"CameraGeoGroup" if point_group_type == "CAMERA" else "ObjectGeoGroup"
-        point_group = create_group_for_points(name)
+        point_group = _create_group_for_points(name)
 
         with point_group:  # go inside Group
-            sphere = create_node("Sphere", knobs={"rows": 3, "columns": 3, "radius": "[value parent.sphere_radius]"})
+            sphere = _create_node("Sphere", knobs={"rows": 3, "columns": 3, "radius": "[value parent.sphere_radius]"})
             merge_geo = nuke.nodes.MergeGeo()
 
             axis = nuke.nodes.Axis3()
@@ -192,13 +187,14 @@ def get_point_groups() -> [nuke.Node]:
                                             axis_data[knob_name]["xs"],
                                             axis_data[knob_name]["ys"],
                                             axis_data[knob_name]["zs"]
-                                        ])
+                                        ],
+                                        first_frame=OFFSET)
 
             last_merge_geo_input = 0
-            geo_nodes = create_read_geo_nodes(point_group_data["geo"])
+            geo_nodes = _create_read_geo_nodes(point_group_data["geo"])
             for i, geo_node in enumerate(geo_nodes):
                 if point_group_type == "OBJECT":
-                    transform_geo = create_node("TransformGeo")
+                    transform_geo = _create_node("TransformGeo")
                     transform_geo.setInput(0, geo_node)
                     transform_geo.setInput(1, axis)
                     merge_geo.setInput(i, transform_geo)
@@ -209,21 +205,21 @@ def get_point_groups() -> [nuke.Node]:
 
             sphere_copy = None
             for i, point_data in enumerate(point_group_data["points"]):
-                constant = create_node("Constant", knobs={"color": [random(), random(), random(), 1]})
+                constant = _create_node("Constant", knobs={"color": [random(), random(), random(), 1]})
                 if sphere_copy:
                     sphere_copy = nuke.clone(sphere)
                 else:
                     sphere_copy = sphere
                 sphere_copy.setInput(0, constant)
                 x, y, z = point_data["x_pos"], point_data["y_pos"], point_data["z_pos"]
-                transform_geo = create_node("TransformGeo", knobs={"translate": [x, y, z]})
+                transform_geo = _create_node("TransformGeo", knobs={"translate": [x, y, z]})
                 transform_geo.setName(f"Point_{point_data['name']}")
                 transform_geo.setInput(0, sphere_copy)
                 transform_geo.setInput(1, axis)
 
                 merge_geo.setInput(i + last_merge_geo_input + 1, transform_geo)
 
-            create_node("Output", merge_geo)
+            _create_node("Output", merge_geo)
 
             if point_group_type == "CAMERA":
                 nuke.delete(axis)
@@ -232,8 +228,7 @@ def get_point_groups() -> [nuke.Node]:
 
     return point_groups
 
-
-def set_root_settings():
+def _set_root_settings():
     fps = JSON_DATA["fps"]
     width = JSON_DATA["width"]
     height = JSON_DATA["height"]
@@ -247,14 +242,13 @@ def set_root_settings():
     nuke.Root()["last_frame"].setValue(LAST_FRAME)
     nuke.Root()["lock_range"].setValue(True)
 
-def create_stmap_node() -> nuke.Node:
-    stmap = create_node("Expression", knobs={"expr0": "x/(width-1)", "expr1": "y/(height-1)", "expr2": "0"})
+def _create_stmap_node() -> nuke.Node:
+    stmap = _create_node("Expression", knobs={"expr0": "x/(width-1)", "expr1": "y/(height-1)", "expr2": "0"})
     stmap.setName("STmap")
     return stmap
 
-
-def create_crop_with_reformat() -> nuke.Node:
-    crop = create_node("Crop")
+def _create_crop_with_reformat() -> nuke.Node:
+    crop = _create_node("Crop")
     crop["box"].setExpression("bbox.x", 0)
     crop["box"].setExpression("bbox.y", 1)
     crop["box"].setExpression("bbox.r", 2)
@@ -262,14 +256,14 @@ def create_crop_with_reformat() -> nuke.Node:
     crop["reformat"].setValue(1)
     return crop
 
-def create_crop() -> nuke.Node:
-    crop = create_node("Crop")
+def _create_crop() -> nuke.Node:
+    crop = _create_node("Crop")
     crop["box"].setExpression("width", 2)
     crop["box"].setExpression("height", 3)
     return crop
 
-def create_write_dailies(intermediate_name: str = None) -> nuke.Node:
-    write = create_node("Write")
+def _create_write_dailies(intermediate_name: str = None) -> nuke.Node:
+    write = _create_node("Write")
     filepath = "[file dirname [value root.name]]/"
     if intermediate_name:
         filepath += f"{intermediate_name}/"
@@ -286,8 +280,8 @@ def create_write_dailies(intermediate_name: str = None) -> nuke.Node:
     write["use_limit"].setValue(True)
     return write
 
-def create_write_stmap(intermediate_name: str = None) -> nuke.Node:
-    write = create_node("Write")
+def _create_write_stmap(intermediate_name: str = None) -> nuke.Node:
+    write = _create_node("Write")
     filepath = "[file dirname [value root.name]]/"
     if intermediate_name:
         filepath += f"{intermediate_name}/"
@@ -302,9 +296,8 @@ def create_write_stmap(intermediate_name: str = None) -> nuke.Node:
     write["use_limit"].setValue(True)
     return write
 
-
-def create_write_undistort(intermediate_name: str = None) -> nuke.Node:
-    write = create_node("Write")
+def _create_write_undistort(intermediate_name: str = None) -> nuke.Node:
+    write = _create_node("Write")
     filepath = "[file dirname [value root.name]]/"
     if intermediate_name:
         filepath += f"{intermediate_name}/"
@@ -319,11 +312,11 @@ def create_write_undistort(intermediate_name: str = None) -> nuke.Node:
     write["use_limit"].setValue(True)
     return write
 
-def create_write_geo(file_type: str, intermediate_name: str = None) -> nuke.Node:
+def _create_write_geo(file_type: str, intermediate_name: str = None) -> nuke.Node:
     if not file_type in ["abc", "fbx"]:
         raise ValueError("File type must be abc or fbx.")
 
-    write_geo = create_node("WriteGeo")
+    write_geo = _create_node("WriteGeo")
     filepath = "[file dirname [value root.name]]/"
     if intermediate_name:
         filepath += f"{intermediate_name}/"
@@ -337,11 +330,15 @@ def create_write_geo(file_type: str, intermediate_name: str = None) -> nuke.Node
         write_geo["animateMeshVertices"].setValue(True)
     return write_geo
 
-def render_dailies(from_node: nuke.Node, intermediate_name: str = None, cleanup_after_render: bool = False) -> None:
-    crop = create_crop()
-    reformat = create_node("Reformat", knobs={"type": "to_box", "box_width": 2048})
-    crop_reformat = create_crop_with_reformat()
-    write = create_write_dailies(intermediate_name)
+
+# render functions
+
+
+def _render_dailies(from_node: nuke.Node, intermediate_name: str = None, cleanup_after_render: bool = False) -> None:
+    crop = _create_crop()
+    reformat = _create_node("Reformat", knobs={"type": "to_box", "box_width": 2048})
+    crop_reformat = _create_crop_with_reformat()
+    write = _create_write_dailies(intermediate_name)
     nodes_to_cleanup = [crop, reformat, crop_reformat, write]
 
     crop_reformat.setInput(0, from_node)
@@ -363,12 +360,12 @@ def render_dailies(from_node: nuke.Node, intermediate_name: str = None, cleanup_
         for n in nodes_to_cleanup:
             nuke.delete(n)
 
-def render_stmap(from_node: nuke.Node, undistort: nuke.Node, intermediate_name: str = None) -> None:
-    stmap = create_stmap_node()
-    crop = create_crop()
+def _render_stmap(from_node: nuke.Node, undistort: nuke.Node, intermediate_name: str = None) -> None:
+    stmap = _create_stmap_node()
+    crop = _create_crop()
     undistort_copy = nuke.clone(undistort)
-    crop_reformat = create_crop_with_reformat()
-    write = create_write_stmap(intermediate_name)
+    crop_reformat = _create_crop_with_reformat()
+    write = _create_write_stmap(intermediate_name)
     nodes_to_cleanup = [stmap, crop, undistort_copy, crop_reformat, write]
 
     stmap.setInput(0, from_node)
@@ -382,9 +379,9 @@ def render_stmap(from_node: nuke.Node, undistort: nuke.Node, intermediate_name: 
     for n in nodes_to_cleanup:
         nuke.delete(n)
 
-def render_undistort(from_node: nuke.Node, intermediate_name: str = None) -> None:
-    crop_reformat = create_crop_with_reformat()
-    write = create_write_undistort(intermediate_name)
+def _render_undistort(from_node: nuke.Node, intermediate_name: str = None) -> None:
+    crop_reformat = _create_crop_with_reformat()
+    write = _create_write_undistort(intermediate_name)
     nodes_to_cleanup = [crop_reformat, write]
 
     crop_reformat.setInput(0, from_node)
@@ -395,9 +392,9 @@ def render_undistort(from_node: nuke.Node, intermediate_name: str = None) -> Non
     for n in nodes_to_cleanup:
         nuke.delete(n)
 
-def render_geo(from_node: nuke.Node, intermediate_name: str = None) -> None:
-    write_geo_fbx = create_write_geo("fbx", intermediate_name)
-    write_geo_abc = create_write_geo("abc", intermediate_name)
+def _render_geo(from_node: nuke.Node, intermediate_name: str = None) -> None:
+    write_geo_fbx = _create_write_geo("fbx", intermediate_name)
+    write_geo_abc = _create_write_geo("abc", intermediate_name)
 
     write_geo_fbx.setInput(0, from_node)
     write_geo_abc.setInput(0, from_node)
@@ -408,7 +405,11 @@ def render_geo(from_node: nuke.Node, intermediate_name: str = None) -> None:
     for n in [write_geo_fbx, write_geo_abc]:
         nuke.delete(n)
 
-def shuffle_and_render_nodes(nodes_data) -> None:
+
+# shuffle function
+
+
+def _shuffle_and_render_nodes(nodes_data) -> None:
     """
     nodes_data = {
         "read_groups": [
@@ -426,7 +427,7 @@ def shuffle_and_render_nodes(nodes_data) -> None:
     }
     """
     # scene + geo nodes
-    scene = create_node("Scene")
+    scene = _create_node("Scene")
     scene.setXYpos(0, 0)
     for i, geo_node in enumerate(nodes_data["geo_nodes"]):
         scene.setInput(i, geo_node)
@@ -442,7 +443,7 @@ def shuffle_and_render_nodes(nodes_data) -> None:
         read.setXYpos(x_pos, y_pos)
 
         # crop
-        crop = create_crop()
+        crop = _create_crop()
         crop.setInput(0, read)
         y_pos += 86
         crop.setXYpos(x_pos, y_pos)
@@ -472,19 +473,19 @@ def shuffle_and_render_nodes(nodes_data) -> None:
         # dot + scanline + camera + merge
         y_pos += 120
 
-        dot = create_node("Dot", undistort)
+        dot = _create_node("Dot", undistort)
         dot.setXYpos(x_pos + 34, y_pos + 4)
 
         camera = read_group["camera"]
         camera.setXYpos(x_pos - 400, y_pos - 20)
 
-        scanline = create_node("ScanlineRender", knobs={"motion_vectors_type": "off", "overscan": 500})
+        scanline = _create_node("ScanlineRender", knobs={"motion_vectors_type": "off", "overscan": 500})
         scanline.setInput(0, dot)
         scanline.setInput(1, scene)
         scanline.setInput(2, camera)
         scanline.setXYpos(x_pos - 210, y_pos)
 
-        merge = create_node("Merge2", knobs={"bbox": "B"})
+        merge = _create_node("Merge2", knobs={"bbox": "B"})
         merge.setInput(0, dot)
         merge.setInput(1, scanline)
         merge.setXYpos(x_pos, y_pos + 80)
@@ -494,26 +495,30 @@ def shuffle_and_render_nodes(nodes_data) -> None:
 
         # render writes
         intermediate_name = read_group["name"] if index else None
-        render_stmap(from_node=crop, undistort=undistort, intermediate_name=intermediate_name)
-        render_undistort(from_node=undistort, intermediate_name=intermediate_name)
-        render_dailies(from_node=merge, intermediate_name=intermediate_name)
+        _render_stmap(from_node=crop, undistort=undistort, intermediate_name=intermediate_name)
+        _render_undistort(from_node=undistort, intermediate_name=intermediate_name)
+        _render_dailies(from_node=merge, intermediate_name=intermediate_name)
         scene.setInput(scene.inputs(), camera)
-        render_geo(from_node=scene, intermediate_name=intermediate_name)
+        _render_geo(from_node=scene, intermediate_name=intermediate_name)
         scene.setInput(scene.inputs()-1, None)
 
-def start():
+
+# start
+
+
+def _start():
 
     nuke.scriptOpen(NUKE_SCRIPT)
     nuke.scriptSave(NUKE_SCRIPT)  # save to crete file
 
     read_groups = []
     for camera_data in JSON_DATA["cameras"]:
-        camera = get_camera(camera_data)
+        camera = _get_camera(camera_data)
         read = import_file_as_read_node(camera_data["source"]["path"])
-        softclip = create_soft_clip_node(camera_data)
-        grade = create_grade_node(camera_data)
-        colorspace_node = create_node("Colorspace", knobs={"colorspace_in": "sRGB"})
-        undistort = get_undistort_from_script(camera_data["undistort_script_path"])[0]
+        softclip = _create_soft_clip_node(camera_data)
+        grade = _create_grade_node(camera_data)
+        colorspace_node = _create_node("Colorspace", knobs={"colorspace_in": "sRGB"})
+        undistort = _get_undistort_from_script(camera_data["undistort_script_path"])[0]
 
         read_groups.append({
             "camera": camera,
@@ -523,16 +528,16 @@ def start():
             "name": camera_data["name"]
         })
 
-    point_groups = get_point_groups()
+    point_groups = _get_point_groups()
 
-    set_root_settings()
+    _set_root_settings()
 
     # shuffle nodes
     nodes_data = {
         "read_groups": read_groups,
         "geo_nodes": point_groups
     }
-    shuffle_and_render_nodes(nodes_data)
+    _shuffle_and_render_nodes(nodes_data)
 
     [nuke.delete(node) for node in nuke.allNodes() if node.Class() == "Viewer"]
 
@@ -541,18 +546,7 @@ def start():
 
     nuke.scriptSave(NUKE_SCRIPT)
 
+    open_in_explorer(NUKE_SCRIPT)
 
-start()
 
-
-open_in_explorer(NUKE_SCRIPT)
-# TODO: create Cameras with Axis (if Axis needed) +
-# TODO: create PointGroups +
-# TODO: create Read files +
-# TODO: create Undistrot +
-# TODO: set Root settings +
-# TODO: create STMap +
-# TODO: shuffle node + create Write and WriteGeo nodes + render +
-#
-# TODO: make sure 3DE4 Undistort nodes exists in Nuke
-# TODO: checkbox "collect sources"
+_start()

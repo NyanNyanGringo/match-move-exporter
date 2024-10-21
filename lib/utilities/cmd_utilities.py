@@ -4,6 +4,12 @@ import platform
 
 
 def run_terminal_command(command: str, cwd: str = None) -> None:
+    """
+    Execute command in terminal in any OS.
+    :param command: command to execute in terminal.
+    :param cwd: directory in which the command should be executed in the terminal.
+    :return: None
+    """
     OS = platform.system()
 
     if OS == "Windows":
@@ -24,9 +30,9 @@ def run_terminal_command(command: str, cwd: str = None) -> None:
         subprocess.Popen(script, shell=use_shell)
 
 
-def correct_path_to_console_path(input_path: str) -> str:
+def correct_path_to_console_path(path: str) -> str:
     path_corrected = str()
-    for path_part in input_path.replace("\\", r'/').split("/"):
+    for path_part in path.replace("\\", r'/').split("/"):
         if " " in path_part:
             path_corrected += f'"{path_part}"/'
             continue

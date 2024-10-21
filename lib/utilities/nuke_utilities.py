@@ -1,4 +1,4 @@
-try:  # let work nuke_utilities.py work in any context, not only inside nuke
+try:  # let nuke_utilities.py work in any context, not only inside nuke
     import nuke
 except ImportError:
     pass
@@ -16,63 +16,42 @@ MOV_EXTENSIONS = [".mov", ".mp4"]
 SEQUENCE_EXNTENSIONS = [".exr", ".dpx", ".png", ".tiff", ".psd", ".jpeg", ".jpg"]
 
 
-# private
-
-
-def _create_script_file(script: str) -> str:
-    dir_path = os.path.join(tempfile.gettempdir(), "match_move_exporter")
-
-    os.makedirs(dir_path, exist_ok=True)
-
-    filepath = os.path.join(dir_path, "NUKE_PYTHON_SCRIPT.py")
-
-    with open(filepath, "w") as file:
-        file.write(script)
-
-    return filepath
-
-
-# public
-
-
-def get_export_pyscript(return_file: bool = True) -> str:
+def get_export_pyscript() -> str:
     """
-    Скрипт для Nuke, который экспортирует трекинг-дату:
-    - Дэйлиз .mov
-    - STMap дисторсию .exr
-    - Камеру и геометрию в формате .abc и .fbx
-    - Undistort в формате .exr
-    - Папку geo, где будет вся геометрия
+    Return Python Script for Nuke which export all tracking data. This script
+    works only with json data (JsonForNuke) that must be exported from 3DE4 or
+    SynthEyes project. As system arguments script expects to receive json data.
 
-    На входе скрипту требуются аргументы:
-    - argv[1]: Подготовленный под экспорт скрипт .nk
+    This function read Python Script from nuke_export_script.py file which
+    located in current directory. And write it to .../TEMP/MMEXPORTER_NUKE_PYTHON_SCRIPT.py
+    path.
 
-    Важно: для корректной работы скрипта необходим подготовленный '.nk' файл, который
-    создается на этапе экспорта из 3DEqualizer или SynthEyes. Также, должен быть
-    доступ к импорту файлов из папки lib.
+    :return: path to Python Script in temp directory.
     """
     this_path = os.path.dirname(os.path.abspath(__file__))
     pyscript_path = os.path.join(this_path, "nuke_export_script.py")
     with open(pyscript_path, "r") as file:
         script = file.read()
 
-    if return_file:
-        return _create_script_file(script)
-    return script
+    filepath = os.path.join(os.path.join(tempfile.gettempdir(), "MMEXPORTER_NUKE_PYTHON_SCRIPT.py"))
+    with open(filepath, "w") as file:
+        file.write(script)
+
+    return filepath
 
 
 def execute_nuke_script(nuke_exec_path: str,
                         py_script_path: str,
-                        *args, **kwargs):
+                        *args, **kwargs) -> None:
     """
-    Opens NukeX or NukeStudio in new terminal
+    Execute Python Script through Nuke terminal mode (opens new terminal).
 
-    :param nuke_exec_path: path to nuke executable
-    :param py_script_path: path to .py file to execute in nuke
+    :param nuke_exec_path: path to nuke executable.
+    :param py_script_path: path to Python file to execute in Nuke.
     :param args: any args to use in py_script. Example: nuke script path, etc.
     :param kwargs:
-        PATHS_TO_ADD_TO_PYTHONPATH: list, дополнительные пути, которые нужно добавить в окружение.
-        Например, чтобы Nuke мог импортировать определенные пользовательские библиотеки.
+        PATHS_TO_ADD_TO_PYTHONPATH: list of additional paths which will be added to
+        environment. For example, so that Nuke can import certain user libraries.
     :return: None
     """
     command = ""
@@ -118,15 +97,23 @@ def execute_nuke_script(nuke_exec_path: str,
     return run_terminal_command(command, cwd=cwd)
 
 
-def get_nuke_script_path(folder_path: str, script_name: str, dir_folder_is_version: bool = True) -> str:
-    if dir_folder_is_version:  # TODO: add env arg
-        dir_folder = get_version_with_postfix(script_name)
-    else:
-        dir_folder = script_name
+def get_nuke_script_path(path: str, script_name: str, dir_folder_is_version: bool = True) -> str:
+    """
+    Generate Nuke script path according to parameters. Create folders if they don't exist.
+
+    :param path: path to folder where will be structure (like: "/folder/script_name.nk") created.
+    :param script_name: name of Nuke script.
+    :param dir_folder_is_version: if True, folder will be version with postfix (detects automatically
+    with regexp from script_name).
+    :return: path to Nuke script.
+    """
+    folder = script_name
+    if dir_folder_is_version:
+        folder = get_version_with_postfix(script_name)
 
     nuke_script_path = os.path.join(
-        folder_path,
-        dir_folder,
+        path,
+        folder,
         script_name + ".nk"
     )
 
@@ -135,8 +122,9 @@ def get_nuke_script_path(folder_path: str, script_name: str, dir_folder_is_versi
     return nuke_script_path
 
 
-def _check_path_exists(file_path: str) -> bool:
-    if not file_path.replace(" ", ""):
+def check_path_exists(file_path: str) -> bool:
+    """Check if file path exists."""
+    if not file_path.strip():
         return False
 
     if get_extension(file_path) in MOV_EXTENSIONS and not os.path.exists(file_path):
@@ -148,10 +136,13 @@ def _check_path_exists(file_path: str) -> bool:
     return True
 
 
-# START
-
-
 def check_file_is_sequence(file_path: str) -> bool:
+    """
+    Check if file path is sequence or not. Works even file doesn't exist.
+
+    :param file_path: path to file which check.
+    :return: True, if file is sequence.
+    """
     no_extension = len(os.path.splitext(file_path)) == 1
     if no_extension:
         raise ValueError(f"Looks like {file_path} is folder, not file.")
@@ -174,7 +165,7 @@ def check_file_is_sequence(file_path: str) -> bool:
 
 
 def get_extension(file_path: str) -> str:
-    """Return file extension with dot"""
+    """Return file extension with dot."""
     try:
         return os.path.splitext(file_path)[1]
     except IndexError:
@@ -182,7 +173,13 @@ def get_extension(file_path: str) -> str:
 
 
 def get_file_name(file_full_name: str, ignore_version_and_postfix: bool = True) -> str:
-    """Return file name without extension and version"""
+    """
+    Removes extension and counter/padding from file name.
+
+    :param file_full_name: file name with version and extension.
+    :param ignore_version_and_postfix: if True, also remove version and postfix.
+    :return: file name without extension and version.
+    """
 
     # remove extension
     file_name = os.path.splitext(file_full_name)[0]
@@ -196,18 +193,19 @@ def get_file_name(file_full_name: str, ignore_version_and_postfix: bool = True) 
     if ignore_version_and_postfix:
         file_name = re.sub("_v\d+(_.+|)", "", file_name)
 
-    # remove dots in the end if exists
+    # remove dots in the end if still exists
     file_name = re.sub("\.+$", "", file_name)
     return re.sub("_+$", "", file_name)
 
 
-def import_file_as_read_node(file_path):
+def import_file_as_read_node(file_path: str):
     """
+    Get file path and import like Read node.
 
-    :param file_path:
+    :param file_path: path to file to import as Read node.
     :return: nuke.Node (Read)
     """
-    if not _check_path_exists(file_path):
+    if not check_path_exists(file_path):
         raise FileNotFoundError(f"File doesn't exists:\n\n{file_path}")
 
     if get_extension(file_path) not in MOV_EXTENSIONS + SEQUENCE_EXNTENSIONS:
@@ -251,3 +249,53 @@ def import_file_as_read_node(file_path):
     read_node["auto_alpha"].setValue(1)
 
     return read_node
+
+
+def import_nodes_from_script(script_path: str) -> list:
+    """
+    Import nodes from Nuke script to current Nuke script.
+
+    :param script_path: path to Nuke script from which to import nodes.
+    :return: list of Nuke nodes.
+    """
+    previous_all_nodes = nuke.allNodes()
+    nuke.scriptReadFile(script_path)
+    return list(set(nuke.allNodes()) - set(previous_all_nodes))
+
+def animate_xyz_knob_values(knob,  # nuke.XYZ_Knob
+                            values: [[], [], []],  # [[x], [y], [z]]
+                            first_frame: int) -> None:
+    """
+    Animates nuke knob from certain frame according to x, y and z values.
+
+    Warning: quantity of values in all of 3 lists must be the same,
+    otherwise iteration will be for the smallest one.
+
+    :param knob: Nuke knob which holds a 3D coordinate.
+    :param values: list of lists with 3D coordinates in format [[x], [y], [z]].
+    :param first_frame: frame to start animation with.
+    :return: None
+    """
+    knob.setAnimated()
+    for i, (x, y, z) in enumerate(zip(*values)):
+        frame = first_frame + i
+        knob.setValueAt(x, frame, 0)  # x
+        knob.setValueAt(y, frame, 1)  # y
+        knob.setValueAt(z, frame, 2)  # z
+
+
+def animate_array_knob_values(knob,  # nuke.Array_Knob
+                              values: [int],
+                              first_frame: int) -> None:
+    """
+    Animates nuke knob from certain frame according values.
+
+    :param knob: Nuke slider knob.
+    :param values: list of integers.
+    :param first_frame: frame to start animation with.
+    :return: None
+    """
+    knob.setAnimated()
+    for i, value in enumerate(values):
+        frame = first_frame + i
+        knob.setValueAt(value, frame)

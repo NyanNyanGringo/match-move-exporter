@@ -7,14 +7,14 @@
 #
 # 3DE4.script.comment:	Easy and Fast Export for work.
 #
+import tde4
+from vl_sdv import rot3d, mat3d, VL_APPLY_ZXY, vec3d
+
 import json
 import os
 import re
 import shutil
 import tempfile
-
-import tde4
-from vl_sdv import rot3d, mat3d, VL_APPLY_ZXY, vec3d
 
 from lib.utilities.os_utilities import get_root_path, open_in_explorer
 from lib.utilities.nuke_utilities import get_export_pyscript, execute_nuke_script, get_nuke_script_path
@@ -30,6 +30,7 @@ NUKE_EXECUTABLE = os.getenv("NUKE_EXECUTABLE_PATH")
 
 
 def check_nuke_executable_path() -> bool:
+    """Check if NUKE_EXECUTABLE exists and path is correct."""
     if not os.path.exists(NUKE_EXECUTABLE):
         message = f"Nuke path doesn't exists: {NUKE_EXECUTABLE}"
         tde4.postQuestionRequester("Message", message, "OK")
@@ -44,6 +45,7 @@ def check_nuke_executable_path() -> bool:
     return True
 
 def check_camera_point_group() -> bool:
+    """Check if current 3DE4 project has Camera point group."""
     for point_group in tde4.getPGroupList():
         if tde4.getPGroupType(point_group) == "CAMERA":
             return True
@@ -53,6 +55,7 @@ def check_camera_point_group() -> bool:
     return False
 
 def check_nuke_script_name() -> bool:
+    """Check name entered by the user."""
     nuke_script_name: str = tde4.getWidgetValue(requester, "textfield_name")
 
     if nuke_script_name.strip():
@@ -64,6 +67,7 @@ def check_nuke_script_name() -> bool:
     return False
 
 def check_project_exists() -> bool:
+    """Check any 3DE4 project opened."""
     if tde4.getProjectPath():
         return True
 
@@ -73,6 +77,9 @@ def check_project_exists() -> bool:
     return False
 
 def check_and_remove_files_in_existed_path(path) -> bool:
+    """If folder to generate all tracking data through Nuke already exist,
+    aks user to delete it and all contained files. After deleting
+    recreating folder, but empty ony."""
     folder_path = os.path.dirname(path)
     if os.path.exists(folder_path):
         request = tde4.postQuestionRequester("Question", f"Path already exists: {folder_path}\n\n"
@@ -93,26 +100,30 @@ def check_and_remove_files_in_existed_path(path) -> bool:
 
 def button_clicked_callback(requester, widget, action) -> None:
     LOGGER.info(f"New callback from widget {widget} received, action: {action}")
+    export_tracking_data_through_nuke(script_name=tde4.getWidgetValue(requester, "textfield_name"))
 
-    if not check_project_exists():
+
+def label_changed_callback(requester, widget, action) -> None:
+    LOGGER.info(f"New callback from widget {widget} received, action: {action}")
+
+
+def _MatchMoveExporterUpdate(requester) -> None:
+    LOGGER.info("New update callback received, put your code here...")
+
+
+# 3DE4 FUNCTIONS
+
+
+def export_tracking_data_through_nuke(script_name: str):
+    if not all([check_nuke_executable_path(), check_project_exists(),
+                check_nuke_script_name(), check_camera_point_group()]):
         return
-
-    if not check_nuke_executable_path():
-        return
-
-    if not check_nuke_script_name():
-        return
-
-    if not check_camera_point_group():
-        return
-
-    # TODO: проверять, что во всех камерах source существует
 
     nuke_pyscript = get_export_pyscript()
     LOGGER.info(f"nuke_pyscript: {nuke_pyscript}")
 
-    nuke_script_path = get_nuke_script_path(folder_path=os.path.dirname(tde4.getProjectPath()),
-                                            script_name=tde4.getWidgetValue(requester, "textfield_name"),
+    nuke_script_path = get_nuke_script_path(path=os.path.dirname(tde4.getProjectPath()),
+                                            script_name=script_name,
                                             dir_folder_is_version=True)
     LOGGER.info(f"nuke_script_path: {nuke_script_path}")
 
@@ -129,19 +140,271 @@ def button_clicked_callback(requester, widget, action) -> None:
                         PATHS_TO_ADD_TO_PYTHONPATH=[get_root_path()]  # kwargs: add access to lib folder for nuke
                         )
 
-def label_changed_callback(requester, widget, action) -> None:
-    LOGGER.info(f"New callback from widget {widget} received, action: {action}")
-    pass
 
-def _MatchMoveExporterUpdate(requester) -> None:
-    LOGGER.info("New update callback received, put your code here...")
-    pass
+class JsonForNuke:
+    """Class to generate json file, used in Python Script (that will be
+    executed inside Nuke). This json contains all necessary information
+    to export all matchmove files from 3DE4 through Nuke."""
+    def __init__(self):
+        """Initialise some common attributes."""
+        self.camera_point_group = [pg for pg in tde4.getPGroupList() if tde4.getPGroupType(pg) == "CAMERA"][0]
+        self.scene_translate = tde4.getScenePosition3D()
+        self.scene_rotation = convertToAngles(tde4.getSceneRotation3D())
+        self.scene_scale = tde4.getSceneScale3D()
+
+    def get_json_path(self) -> str:
+        """Write .json file to temp directory and return its path."""
+        json_path = os.path.join(tempfile.gettempdir(), "json_for_nuke.json")
+
+        with open(json_path, "w") as json_file:
+            json.dump(self.get_json(), json_file, indent=4)
+
+        return json_path
+
+    def get_json(self) -> dict:
+        """
+        Generates json file in format:
+        {
+        "program": "3DE4" or "SynthEyes"  # name of program.
+        "offset": 0,  # frame offset. Usually 1001.
+        "fps": 0,
+        "width": 0,  # width of the first camera.
+        "height": 0,  # height of the first camera.
+        "range": [0, 0],  # range of the first camera.
+        "cameras": [
+            {
+                "axis": {
+                    "translate": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                    },
+                    "rotation": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                    },
+                    "scale": 0.0
+                },
+                "translate": {
+                    "xs": [0.0, ...],
+                    "ys": [0.0, ...],
+                    "zs": [0.0, ...]
+                },
+                "rotate": {
+                    "xs": [0.0, ...],
+                    "ys": [0.0, ...],
+                    "zs": [0.0, ...]
+                },
+                "focal": [0.0, ...],
+                "haperture": 0.0,
+                "vaperture": 0.0,
+                "name": "",  # name of camera.
+                "undistort_script_path": ".../Temp/undistort_for_CameraName.nk",
+                "source": {
+                    "path": ".../source/source.####.exr"
+                    "black_point": 0.0,
+                    "white_point": 0.0,
+                    "gamma": 0.0,
+                    "softclip": 0.0
+                }
+            },
+        ],
+        "point_groups": [
+            {
+                "type": "CAMERA" or "OBJECT",
+                "name": "",
+                "axis": {
+                    "translate": {
+                        "xs": [0.0, ...], "ys": [0.0, ...], "zs": [0.0, ...],
+                    },
+                    "rotate": {
+                        "xs": [0.0, ...], "ys": [0.0, ...], "zs": [0.0, ...],
+                    }
+                },
+                "points": [
+                    {
+                        "name": "",
+                        "x_pos": 0.0,
+                        "y_pos": 0.0,
+                        "z_pos": 0.0
+                    },
+                "geo": [".../Temp/SomeGeo.obj", ...]
+                ],
+        "3de4_project_path": ".../path/to/equalizer_project.3de"
+    }
+        """
+        first_camera = tde4.getFirstCamera()
+        JSON = {
+            "program": "3DE4",
+
+            "offset": tde4.getCameraFrameOffset(first_camera),
+            "fps": tde4.getCameraFPS(first_camera),
+            "width": tde4.getCameraImageWidth(first_camera),
+            "height": tde4.getCameraImageHeight(first_camera),
+            "range": tde4.getCameraCalculationRange(first_camera),
+
+            "cameras": self.get_cameras_list(),
+            "point_groups": self.get_point_group_list(),
+            "3de4_project_path": tde4.getProjectPath()
+        }
+
+        return JSON
+
+    def get_camera_dict(self, camera) -> dict:
+        offset = tde4.getCameraFrameOffset(camera)
+        camera_name = validName(tde4.getCameraName(camera))
+
+        nk_undistort_path = os.path.join(
+            tempfile.gettempdir(),
+            f"undistort_for_{camera_name}.nk"
+        )
+        os.makedirs(os.path.dirname(nk_undistort_path), exist_ok=True)
+        exportNukeDewarpNode(camera, offset, nk_undistort_path)
+
+        camera_translate_x, camera_translate_y, camera_translate_z = [], [], []
+        camera_rotate_x, camera_rotate_y, camera_rotate_z = [], [], []
+        focal = []
+        previous_rotation = None
+        for frame in range(1, tde4.getCameraNoFrames(camera) + 1):
+            x_pos, y_pos, z_pos = tde4.getPGroupPosition3D(self.camera_point_group, camera, frame)
+            camera_translate_x.append(x_pos), camera_translate_y.append(y_pos), camera_translate_z.append(z_pos)
+
+            current_rotation = convertToAngles(tde4.getPGroupRotation3D(self.camera_point_group, camera, frame))
+            if previous_rotation:
+                current_rotation = [
+                    angleMod360(previous_rotation[0], current_rotation[0]),
+                    angleMod360(previous_rotation[1], current_rotation[1]),
+                    angleMod360(previous_rotation[2], current_rotation[2])
+                ]
+            previous_rotation = current_rotation
+            x_rot, y_rot, z_rot = current_rotation
+            camera_rotate_x.append(x_rot), camera_rotate_y.append(y_rot), camera_rotate_z.append(z_rot)
+
+            f = tde4.getCameraFocalLength(camera, frame) * 10
+            focal.append(f)
+
+        camera_dict = {
+            "axis": {
+                "translate": {
+                    "x": self.scene_translate[0],
+                    "y": self.scene_translate[1],
+                    "z": self.scene_translate[2],
+                },
+                "rotation": {
+                    "x": self.scene_rotation[0],
+                    "y": self.scene_rotation[1],
+                    "z": self.scene_rotation[2]
+                },
+                "scale": self.scene_scale
+            },
+            "translate": {
+                "xs": camera_translate_x,
+                "ys": camera_translate_y,
+                "zs": camera_translate_z
+            },
+            "rotate": {
+                "xs": camera_rotate_x,
+                "ys": camera_rotate_y,
+                "zs": camera_rotate_z
+            },
+            "focal": focal,
+            "haperture": tde4.getLensFBackWidth(tde4.getCameraLens(camera)) * 10,
+            "vaperture": tde4.getLensFBackHeight(tde4.getCameraLens(camera)) * 10,
+            "name": camera_name,
+            "undistort_script_path": nk_undistort_path,
+            "source": {
+                "path": tde4.getCameraPath(camera),
+                "black_white": tde4.getCamera8BitColorBlackWhite(camera),
+                "gamma": tde4.getCamera8BitColorGamma(camera),
+                "softclip": tde4.getCamera8BitColorSoftclip(camera)
+            }
+        }
+
+        return camera_dict
+
+    def get_cameras_list(self) -> list:
+        cameras = []
+        for camera in tde4.getCameraList():
+            if tde4.getCameraType(camera) == "SEQUENCE":
+                cameras.append(self.get_camera_dict(camera))
+                # cameras.append(self.get_camera_dict(camera))  # unescape for test
+        return cameras
+
+    def get_point_group_dict(self, pg, camera) -> dict:
+        # collect translate and rotate of point group for Axis
+        axis_translate_x, axis_translate_y, axis_translate_z = [], [], []
+        axis_rotate_x, axis_rotate_y, axis_rotate_z = [], [], []
+        previous_rotation = None
+        for frame in range(1, tde4.getCameraNoFrames(camera) + 1):
+            x_pos, y_pos, z_pos = tde4.getPGroupPosition3D(pg, camera, frame)
+            axis_translate_x.append(x_pos), axis_translate_y.append(y_pos), axis_translate_z.append(z_pos)
+
+            current_rotation = convertToAngles(tde4.getPGroupRotation3D(pg, camera, frame))
+            if previous_rotation:
+                current_rotation = [
+                    angleMod360(previous_rotation[0], current_rotation[0]),
+                    angleMod360(previous_rotation[1], current_rotation[1]),
+                    angleMod360(previous_rotation[2], current_rotation[2])
+                ]
+            previous_rotation = current_rotation
+            x_rot, y_rot, z_rot = current_rotation
+            axis_rotate_x.append(x_rot), axis_rotate_y.append(y_rot), axis_rotate_z.append(z_rot)
+
+        # collect points of point group
+        points = []
+        for point in [p for p in tde4.getPointList(pg) if tde4.isPointCalculated3D(pg, p)]:
+            point_3d_pos = tde4.getPointCalcPosition3D(pg, point)
+            point_dict = {
+                "name": validName(tde4.getPointName(pg, point)),
+                "x_pos": point_3d_pos[0],
+                "y_pos": point_3d_pos[1],
+                "z_pos": point_3d_pos[2]
+            }
+            points.append(point_dict)
+
+        # collect geo of point group
+        geo = []
+        for model in tde4.get3DModelList(pg, 0):  # 0 means selected only False
+
+            if not tde4.get3DModelVisibleFlag(pg, model):
+                continue
+
+            filepath = get_obj_filepath(pg, model)
+            geo.append(filepath)
+
+        point_group_dict = {
+            "type": tde4.getPGroupType(pg),
+            "name": validName(tde4.getPGroupName(pg)),
+            "axis": {
+                "translate": {
+                    "xs": axis_translate_x,
+                    "ys": axis_translate_y,
+                    "zs": axis_translate_z
+                },
+                "rotate": {
+                    "xs": axis_rotate_x,
+                    "ys": axis_rotate_y,
+                    "zs": axis_rotate_z
+                }
+            },
+            "points": points,
+            "geo": geo
+        }
+        return point_group_dict
+
+    def get_point_group_list(self) -> list:
+        point_groups = []
+
+        camera = tde4.getCurrentCamera()  # get any camera
+        for point_group in tde4.getPGroupList():
+            if camera is not None:
+                point_groups.append(self.get_point_group_dict(point_group, camera))
+
+        return point_groups
 
 
-# 3DE4 FUNCTIONS
-
-
-def get_obj_filepath(pg, model):
+def get_obj_filepath(pg: int, model: int) -> str:
     """
     Generates an `.obj` file for a 3D model and returns its file path.
 
@@ -223,268 +486,8 @@ def get_obj_filepath(pg, model):
     # Return the path to the .obj file
     return obj_path
 
-class JsonForNuke:
-    def __init__(self):
-        self.camera_point_group = [pg for pg in tde4.getPGroupList() if tde4.getPGroupType(pg) == "CAMERA"][0]
-        self.scene_translate = tde4.getScenePosition3D()
-        self.scene_rotation = convertToAngles(tde4.getSceneRotation3D())
-        self.scene_scale = tde4.getSceneScale3D()
 
-    def get_json_path(self):
-
-        json_path = os.path.join(tempfile.gettempdir(), "json_for_nuke.json")
-
-        with open(json_path, "w") as json_file:
-            json.dump(self.get_json(), json_file, indent=4)
-
-        return json_path
-
-    def get_json(self) -> dict:
-        """
-        {
-        "program": "3DE4" or "SynthEyes"
-        "offset": 0,
-        "fps": 0,
-        "width": 0),
-        "height": 0,
-        "range": [0, 0],
-        "cameras": [
-            {
-                "first_frame": 0,
-                "axis": {
-                    "translate": {
-                        "x": 0.0,
-                        "y": 0.0,
-                        "z": 0.0
-                    },
-                    "rotation": {
-                        "x": 0.0,
-                        "y": 0.0,
-                        "z": 0.0
-                    },
-                    "scale": 0.0
-                },
-                "translate": {
-                    "xs": [0.0, ...],
-                    "ys": [0.0, ...],
-                    "zs": [0.0, ...]
-                },
-                "rotate": {
-                    "xs": [0.0, ...],
-                    "ys": [0.0, ...],
-                    "zs": [0.0, ...]
-                },
-                "focal": [0.0, ...],
-                "haperture": 0.0,
-                "vaperture": 0.0,
-                "    if intermediate_name:
-        filepath += f"undistort_{intermediate_name}/"
-    else:
-        filepath += "undistort/"": "",
-                "undistort_script_path": ".../Temp/undistort_for_CameraName.nk",
-                "source": {
-                    "path": ".../source/source.####.exr"
-                    "black_point": 0.0,
-                    "white_point": 0.0,
-                    "gamma": 0.0,
-                    "softclip": 0.0
-                }
-            },
-        ],
-        "point_groups": [
-            {
-                "type": "CAMERA" or "OBJECT",
-                "name": "pgroup_0",
-                "axis": {
-                    "translate": {
-                        "xs": [0.0, ...], "ys": [0.0, ...], "zs": [0.0, ...],
-                    },
-                    "rotate": {
-                        "xs": [0.0, ...], "ys": [0.0, ...], "zs": [0.0, ...],
-                    }
-                },
-                "points": [
-                    {
-                        "name": "00",
-                        "x_pos": 0.0,
-                        "y_pos": 0.0,
-                        "z_pos": 0.0
-                    },
-                "geo": [".../Temp/SomeGeo.obj", ...]
-                ],
-        "3de4_project_path": ".../path/to/equalizer_project.3de"
-    }
-        """
-        first_camera = tde4.getFirstCamera()
-        JSON = {
-            "program": "3DE4",
-
-            "offset": tde4.getCameraFrameOffset(first_camera),
-            "fps": tde4.getCameraFPS(first_camera),
-            "width": tde4.getCameraImageWidth(first_camera),
-            "height": tde4.getCameraImageHeight(first_camera),
-            "range": tde4.getCameraCalculationRange(first_camera),
-
-            "cameras": self.get_cameras_list(),
-            "point_groups": self.get_point_group_list(),
-            "3de4_project_path": tde4.getProjectPath()
-        }
-
-        return JSON
-
-    def get_camera_dict(self, camera) -> dict:
-        offset = tde4.getCameraFrameOffset(camera)
-        camera_name = validName(tde4.getCameraName(camera))
-
-        nk_undistort_path = os.path.join(  # STOP THERE: TEST CODE!
-            tempfile.gettempdir(),
-            f"undistort_for_{camera_name}.nk"
-        )
-        os.makedirs(os.path.dirname(nk_undistort_path), exist_ok=True)
-        exportNukeDewarpNode(camera, offset, nk_undistort_path)
-
-        camera_translate_x, camera_translate_y, camera_translate_z = [], [], []
-        camera_rotate_x, camera_rotate_y, camera_rotate_z = [], [], []
-        focal = []
-        previous_rotation = None
-        for frame in range(1, tde4.getCameraNoFrames(camera) + 1):
-            x_pos, y_pos, z_pos = tde4.getPGroupPosition3D(self.camera_point_group, camera, frame)
-            camera_translate_x.append(x_pos), camera_translate_y.append(y_pos), camera_translate_z.append(z_pos)
-
-            current_rotation = convertToAngles(tde4.getPGroupRotation3D(self.camera_point_group, camera, frame))
-            if previous_rotation:
-                current_rotation = [
-                    angleMod360(previous_rotation[0], current_rotation[0]),
-                    angleMod360(previous_rotation[1], current_rotation[1]),
-                    angleMod360(previous_rotation[2], current_rotation[2])
-                ]
-            previous_rotation = current_rotation
-            x_rot, y_rot, z_rot = current_rotation
-            camera_rotate_x.append(x_rot), camera_rotate_y.append(y_rot), camera_rotate_z.append(z_rot)
-
-            f = tde4.getCameraFocalLength(camera, frame) * 10
-            focal.append(f)
-
-        camera_dict = {
-            "axis": {
-                "translate": {
-                    "x": self.scene_translate[0],
-                    "y": self.scene_translate[1],
-                    "z": self.scene_translate[2],
-                },
-                "rotation": {
-                    "x": self.scene_rotation[0],
-                    "y": self.scene_rotation[1],
-                    "z": self.scene_rotation[2]
-                },
-                "scale": self.scene_scale
-            },
-            "translate": {
-                "xs": camera_translate_x,
-                "ys": camera_translate_y,
-                "zs": camera_translate_z
-            },
-            "rotate": {
-                "xs": camera_rotate_x,
-                "ys": camera_rotate_y,
-                "zs": camera_rotate_z
-            },
-            "focal": focal,
-            "haperture": tde4.getLensFBackWidth(tde4.getCameraLens(camera)) * 10,
-            "vaperture": tde4.getLensFBackHeight(tde4.getCameraLens(camera)) * 10,
-            "name": camera_name,
-            "undistort_script_path": nk_undistort_path,
-            "source": {
-                "path": tde4.getCameraPath(camera),
-                "black_white": tde4.getCamera8BitColorBlackWhite(camera),
-                "gamma": tde4.getCamera8BitColorGamma(camera),
-                "softclip": tde4.getCamera8BitColorSoftclip(camera)
-            }
-        }
-
-        return camera_dict
-
-    def get_cameras_list(self) -> list:
-        cameras = []
-        for camera in tde4.getCameraList():
-            if tde4.getCameraType(camera) == "SEQUENCE":
-                cameras.append(self.get_camera_dict(camera))
-                # cameras.append(self.get_camera_dict(camera))  # for test
-        return cameras
-
-    def get_point_group_dict(self, pg, camera) -> dict:
-        # collect translate and rotate of point group for Axis
-        axis_translate_x, axis_translate_y, axis_translate_z = [], [], []
-        axis_rotate_x, axis_rotate_y, axis_rotate_z = [], [], []
-        previous_rotation = None
-        for frame in range(1, tde4.getCameraNoFrames(camera) + 1):
-            x_pos, y_pos, z_pos = tde4.getPGroupPosition3D(pg, camera, frame)
-            axis_translate_x.append(x_pos), axis_translate_y.append(y_pos), axis_translate_z.append(z_pos)
-
-            current_rotation = convertToAngles(tde4.getPGroupRotation3D(pg, camera, frame))
-            if previous_rotation:
-                current_rotation = [
-                    angleMod360(previous_rotation[0], current_rotation[0]),
-                    angleMod360(previous_rotation[1], current_rotation[1]),
-                    angleMod360(previous_rotation[2], current_rotation[2])
-                ]
-            previous_rotation = current_rotation
-            x_rot, y_rot, z_rot = current_rotation
-            axis_rotate_x.append(x_rot), axis_rotate_y.append(y_rot), axis_rotate_z.append(z_rot)
-
-        # collect points of point group
-        points = []
-        for point in [p for p in tde4.getPointList(pg) if tde4.isPointCalculated3D(pg, p)]:
-            point_3d_pos = tde4.getPointCalcPosition3D(pg, point)
-            point_dict = {
-                "name": validName(tde4.getPointName(pg, point)),
-                "x_pos": point_3d_pos[0],
-                "y_pos": point_3d_pos[1],
-                "z_pos": point_3d_pos[2]
-            }
-            points.append(point_dict)
-
-        # collect geo of point group
-        geo = []
-        for model in tde4.get3DModelList(pg, 0):  # 0 means selected only False
-
-            if not tde4.get3DModelVisibleFlag(pg, model):
-                continue
-
-            filepath = get_obj_filepath(pg, model)
-            geo.append(filepath)
-
-        point_group_dict = {
-            "type": tde4.getPGroupType(pg),
-            "name": validName(tde4.getPGroupName(pg)),
-            "axis": {
-                "translate": {
-                    "xs": axis_translate_x,
-                    "ys": axis_translate_y,
-                    "zs": axis_translate_z
-                },
-                "rotate": {
-                    "xs": axis_rotate_x,
-                    "ys": axis_rotate_y,
-                    "zs": axis_rotate_z
-                }
-            },
-            "points": points,
-            "geo": geo
-        }
-        return point_group_dict
-
-    def get_point_group_list(self) -> list:
-        point_groups = []
-
-        camera = tde4.getCurrentCamera()  # get any camera
-        for point_group in tde4.getPGroupList():
-            if camera is not None:
-                point_groups.append(self.get_point_group_dict(point_group, camera))
-
-        return point_groups
-
-def convertToAngles(r3d):
+def convertToAngles(r3d) -> tuple:
     """
     Converts a given 3x3 rotation matrix to Euler angles using the ZXY convention.
 
@@ -504,6 +507,7 @@ def convertToAngles(r3d):
     rz = (rot[2] * 180.0) / 3.141592654
     return rx, ry, rz
 
+
 def angleMod360(prev_angle, current_angle):
     """
     Adjusts an angle to stay within the range of -180 to 180 degrees relative to a reference angle.
@@ -522,6 +526,7 @@ def angleMod360(prev_angle, current_angle):
         current_angle += 360.0
     return current_angle
 
+
 def validName(name):
     """
     Cleans a given name string by replacing spaces and '#' symbols with underscores.
@@ -535,6 +540,7 @@ def validName(name):
     for bad_symbol in [" ", "-", "#"]:
         name = name.replace(bad_symbol, "_")
     return name
+
 
 #
 # DO NOT ADD ANY CUSTOM CODE BEYOND THIS POINT!

@@ -29,7 +29,7 @@ def get_log_format() -> str:
 
 def _handle_exception(exc_type, exc_value, exc_traceback):
     """
-    Глобальный обработчик всех необработанных исключений, который пишет их в лог-файл.
+    A global handler for all unhandled exceptions that writes them to a log file.
     """
     if issubclass(exc_type, KeyboardInterrupt):
         # Пропускаем KeyboardInterrupt для возможности прерывания программы
@@ -43,9 +43,10 @@ def _handle_exception(exc_type, exc_value, exc_traceback):
 def setup_or_get_logger(force_setup: bool = False, use_console_handler: bool = False):
     """
     If exists, return logger for MatchMoveExporter or set up a new one.
+
     :param force_setup: if logger already exists - remove it and set up a new one.
     :param use_console_handler: adds output steam handler to console
-    :return:
+    :return: logger
     """
     logger_name = "MatchMoveExporter"
     logger = logging.getLogger(logger_name)
