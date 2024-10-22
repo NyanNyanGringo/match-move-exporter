@@ -16,7 +16,7 @@ import re
 import shutil
 import tempfile
 
-from lib.utilities.os_utilities import get_root_path, open_in_explorer
+from lib.utilities.os_utilities import get_root_path, get_3de4_lenses_for_nuke_path
 from lib.utilities.nuke_utilities import get_export_pyscript, execute_nuke_script, get_nuke_script_path
 from lib.utilities.log_utilities import setup_or_get_logger
 from lib.utilities.export_nuke_LD_3DE4_Lens_Distortion_Node import exportNukeDewarpNode
@@ -115,29 +115,38 @@ def _MatchMoveExporterUpdate(requester) -> None:
 
 
 def export_tracking_data_through_nuke(script_name: str):
+    """Main function to export 3D tracking data from 3DEqualizer through Nuke."""
+
+    # check
     if not all([check_nuke_executable_path(), check_project_exists(),
                 check_nuke_script_name(), check_camera_point_group()]):
         return
 
+    # get Python Script to execute inside Nuke
     nuke_pyscript = get_export_pyscript()
     LOGGER.info(f"nuke_pyscript: {nuke_pyscript}")
 
+    # get Nuke Script path and create folder for export
     nuke_script_path = get_nuke_script_path(path=os.path.dirname(tde4.getProjectPath()),
                                             script_name=script_name,
                                             dir_folder_is_version=True)
     LOGGER.info(f"nuke_script_path: {nuke_script_path}")
 
+    # check if folder already exists. ask to delete it.
     if not check_and_remove_files_in_existed_path(nuke_script_path):
         return
 
+    # get json data from 3DEqualizer to use it in Python Script
     json_for_nuke_path = JsonForNuke().get_json_path()
     LOGGER.info(f"json_for_nuke_path: {json_for_nuke_path}")
 
+    # execute
     execute_nuke_script(NUKE_EXECUTABLE,  # nuke_exec_path
                         nuke_pyscript,  # py_script_path
                         nuke_script_path,  # args: add nuke script path
                         json_for_nuke_path,  # args: add json data path
-                        PATHS_TO_ADD_TO_PYTHONPATH=[get_root_path()]  # kwargs: add access to lib folder for nuke
+                        PATHS_TO_ADD_TO_PYTHONPATH=[get_root_path()],  # kwargs: add access to lib folder for nuke
+                        PATHS_TO_ADD_TO_NUKE_PATH=[get_3de4_lenses_for_nuke_path()]  # kwargs: add access to 3de4 plugins
                         )
 
 

@@ -1,7 +1,7 @@
 # MatchMoveExporter
 
 
-###### Requires: 3DEqualizer 7.1+, Nuke 13.0+
+###### Requires: 3DEqualizer 7.1+, Nuke 14.0+
 
 
 #### [Watch YouTube guide (in progress)](https://i.pinimg.com/originals/09/2c/72/092c72db80eae3f31b8420ed8e60bc73.jpg)
@@ -16,15 +16,25 @@ Export **all** 3D tracking data from 3DEqualizer in **one click**:
 - Nuke project
 
 
-### Installation (for artist):
+### Windows installation for artists:
 
 1. Download the repository to any folder.
-2. In `launcher/launch_3de4.cmd` file fill EQUALIZER_EXECUTABLE_PATH and NUKE_EXECUTABLE_PATH
+2. In `launcher/launch_3de4.cmd` file fill:
+- EQUALIZER_EXECUTABLE_PATH (path to 3DE4.exe)
+- NUKE_EXECUTABLE_PATH (path to Nuke.exe)
+3. Launch `launcher/launch_3de4.cmd` and run `MMExporter/MatchMove Exporter` actionn.
 
 
-### Usage (for artist):
+### MacOS installation for artists:
+in progress...
 
-Launch `launcher/launch_3de4.cmd` and find "MMExporter/MatchMove Exporter" action and run.
+
+### Linux installation for artists:
+in progress...
+
+
+### Pipeline integration:
+in progress...
 
 
 ### 3DEqualizer knowledge base:

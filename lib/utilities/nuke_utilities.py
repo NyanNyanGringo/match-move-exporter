@@ -40,6 +40,27 @@ def get_export_pyscript() -> str:
     return filepath
 
 
+def add_paths_to_command(command: str, paths_to_add: list, env_name: str):
+    """
+    Adds paths to the PYTHONPATH environment variable based on the operating system.
+
+    Args:
+        command (str): The command to which the environment variables will be added.
+        kwargs (dict): A dictionary of parameters where the key 'PATHS_TO_ADD_TO_PYTHONPATH' contains a list of paths.
+
+    Returns:
+        str: The updated command with the environment variables added.
+    """
+    if platform.system() == "Windows":
+        # For Windows, use `set` to add environment variables
+        command += f"set {env_name}=" + os.pathsep.join(paths_to_add) + " & "
+    else:
+        # For Unix-like systems, use `export`
+        command += f"export {env_name}=" + ":".join(paths_to_add) + " && "
+
+    return command
+
+
 def execute_nuke_script(nuke_exec_path: str,
                         py_script_path: str,
                         *args, **kwargs) -> None:
@@ -52,6 +73,8 @@ def execute_nuke_script(nuke_exec_path: str,
     :param kwargs:
         PATHS_TO_ADD_TO_PYTHONPATH: list of additional paths which will be added to
         environment. For example, so that Nuke can import certain user libraries.
+        PATHS_TO_ADD_TO_NUKE_PATH: list of additional paths which will be added to
+        NUKE_PATH environment. For example, if you need to add some nuke plugins.
     :return: None
     """
     command = ""
@@ -60,12 +83,11 @@ def execute_nuke_script(nuke_exec_path: str,
     if "PATHS_TO_ADD_TO_PYTHONPATH" in kwargs:
         paths_to_add = kwargs["PATHS_TO_ADD_TO_PYTHONPATH"]
         if isinstance(paths_to_add, list) and paths_to_add:
-            if platform.system() == "Windows":
-                # Для Windows используем `set` для добавления переменных окружения
-                command += "set PYTHONPATH=" + os.pathsep.join(paths_to_add) + " & "
-            else:
-                # Для Unix-подобных систем используем `export`
-                command += "export PYTHONPATH=" + ":".join(paths_to_add) + " && "
+            command = add_paths_to_command(command, paths_to_add, "PYTHONPATH")
+    if "PATHS_TO_ADD_TO_NUKE_PATH" in kwargs:
+        paths_to_add = kwargs["PATHS_TO_ADD_TO_NUKE_PATH"]
+        if isinstance(paths_to_add, list) and paths_to_add:
+            command = add_paths_to_command(command, paths_to_add, "NUKE_PATH")
 
     # change disk where py_script located (for Windows only)
     if platform.system() == "Windows":

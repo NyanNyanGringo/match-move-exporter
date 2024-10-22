@@ -9,6 +9,10 @@ def get_root_path() -> str:
     return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
+def get_3de4_lenses_for_nuke_path() -> str:
+    return os.path.join(get_root_path(), "plugins", "3de4_lens_distortion_plugin_kit")
+
+
 def get_version_with_postfix(name: str) -> str:
     """Using regular expression detect version and postfix in name.
     If not found return empty string."""
