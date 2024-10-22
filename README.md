@@ -22,7 +22,7 @@ Export **all** 3D tracking data from 3DEqualizer in **one click**:
 2. In `launcher/launch_3de4.cmd` file fill:
 - EQUALIZER_EXECUTABLE_PATH (path to 3DE4.exe)
 - NUKE_EXECUTABLE_PATH (path to Nuke.exe)
-3. Launch `launcher/launch_3de4.cmd` and run `MMExporter/MatchMove Exporter` actionn.
+3. Launch `launcher/launch_3de4.cmd` and run `MMExporter/MatchMove Exporter` action.
 
 
 ### MacOS installation for artists:
