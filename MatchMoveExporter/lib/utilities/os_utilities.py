@@ -5,8 +5,13 @@ import subprocess
 
 
 def get_root_path() -> str:
+    """Return match-move-exporter path."""
+    return os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+
+def get_match_move_exporter_path() -> str:
     """Return MatchMoveExporter path."""
-    return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    return os.path.join(get_root_path(), "MatchMoveExporter")
 
 
 def get_3de4_lenses_for_nuke_path() -> str:

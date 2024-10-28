@@ -16,10 +16,10 @@ import re
 import shutil
 import tempfile
 
-from lib.utilities.os_utilities import get_root_path, get_3de4_lenses_for_nuke_path
-from lib.utilities.nuke_utilities import get_export_pyscript, execute_nuke_script, get_nuke_script_path
-from lib.utilities.log_utilities import setup_or_get_logger
-from lib.utilities.export_nuke_LD_3DE4_Lens_Distortion_Node import exportNukeDewarpNode
+from MatchMoveExporter.lib.utilities.os_utilities import get_root_path, get_3de4_lenses_for_nuke_path
+from MatchMoveExporter.lib.utilities.nuke_utilities import get_export_pyscript, execute_nuke_script, get_nuke_script_path
+from MatchMoveExporter.lib.utilities.log_utilities import setup_or_get_logger
+from MatchMoveExporter.lib.utilities.export_nuke_LD_3DE4_Lens_Distortion_Node import exportNukeDewarpNode
 
 
 LOGGER = setup_or_get_logger(force_setup=True, use_console_handler=False)

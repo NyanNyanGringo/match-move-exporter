@@ -8,8 +8,8 @@ import re
 import platform
 import tempfile
 
-from lib.utilities.cmd_utilities import run_terminal_command, correct_path_to_console_path
-from lib.utilities.os_utilities import get_version_with_postfix
+from MatchMoveExporter.lib.utilities.cmd_utilities import run_terminal_command, correct_path_to_console_path
+from MatchMoveExporter.lib.utilities.os_utilities import get_version_with_postfix
 
 
 MOV_EXTENSIONS = [".mov", ".mp4"]

@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 
-from lib.utilities.os_utilities import get_root_path
+from MatchMoveExporter.lib.utilities.os_utilities import get_root_path
 
 
 def get_log_file_path(create_log_dir: bool = True) -> str:

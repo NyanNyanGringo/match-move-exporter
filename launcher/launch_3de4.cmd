@@ -7,12 +7,7 @@ set NUKE_EXECUTABLE_PATH=C:\Program Files\Nuke14.0v7\Nuke14.0.exe
 rem userconfig
 
 
-rem devconfig
-set DEV=1
-rem devconfig
-
-
-set SCRIPTS_EQUALIZER_PATH=%~dp0..\scripts\equalizer
+set SCRIPTS_EQUALIZER_PATH=%~dp0..\MatchMoveExporter\scripts\tde
 for %%i in ("%SCRIPTS_EQUALIZER_PATH%") do set SCRIPTS_EQUALIZER_PATH=%%~fi
 
 set MATCH_MOVE_EXPORTER_PATH=%~dp0..

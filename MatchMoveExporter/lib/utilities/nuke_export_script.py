@@ -11,9 +11,9 @@ import sys
 import json
 from random import random
 
-from lib.utilities.log_utilities import setup_or_get_logger
-from lib.utilities.os_utilities import open_in_explorer
-from lib.utilities.nuke_utilities import import_file_as_read_node, import_nodes_from_script, \
+from MatchMoveExporter.lib.utilities.log_utilities import setup_or_get_logger
+from MatchMoveExporter.lib.utilities.os_utilities import open_in_explorer
+from MatchMoveExporter.lib.utilities.nuke_utilities import import_file_as_read_node, import_nodes_from_script, \
     animate_array_knob_values, animate_xyz_knob_values, copy_paste_node
 
 # config
