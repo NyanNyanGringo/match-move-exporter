@@ -7,6 +7,9 @@ from MatchMoveExporter.lib.utilities.os_utilities import get_root_path
 
 
 def get_log_file_path(create_log_dir: bool = True) -> str:
+    if os.getenv("MMEXPORTER_CUSTOM_LOG_PATH"):
+        return os.path.join(os.environ["MMEXPORTER_CUSTOM_LOG_PATH"])
+
     path = os.path.join(
         get_root_path(),
         "logs",

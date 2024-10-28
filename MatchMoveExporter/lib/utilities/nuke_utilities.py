@@ -119,7 +119,7 @@ def execute_nuke_script(nuke_exec_path: str,
     return run_terminal_command(command, cwd=cwd)
 
 
-def get_nuke_script_path(path: str, script_name: str, dir_folder_is_version: bool = True) -> str:
+def get_nuke_script_path(path: str, script_name: str) -> str:
     """
     Generate Nuke script path according to parameters. Create folders if they don't exist.
 
@@ -130,7 +130,7 @@ def get_nuke_script_path(path: str, script_name: str, dir_folder_is_version: boo
     :return: path to Nuke script.
     """
     folder = script_name
-    if dir_folder_is_version:
+    if os.getenv("MMEXPORTER_EXPORT_FOLDER_IS_VERSION"):
         folder = get_version_with_postfix(script_name)
 
     nuke_script_path = os.path.join(

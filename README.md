@@ -34,7 +34,46 @@ in progress...
 
 
 ### Pipeline integration:
-in progress...
+Place `match-move-exporter` folder (contains `MatchMoveExporter`) somewhere.
+
+Here is necessary environment variables to run 3DEqualizer4:
+```python
+import os
+import subprocess
+
+# Path to Nuke executable.
+os.environ["NUKE_EXECUTABLE_PATH"] = "/path/to/Nuke.exe"
+
+# Path to 3DEqualizer Scripts and Root (so 3DEqualizer has access to MatchMoveExporter.lib).
+root_path = "/path/to/match-move-exporter"
+scripts_path = "/path/to/MatchMoveExporter/scripts/tde"
+os.environ["PYTHON_CUSTOM_SCRIPTS_3DE4"] = root_path + os.path.pathsep + scripts_path
+
+# Run 3DEqualizer.
+subprocess.run(["/path/to/3DE4.exe"])
+```
+Optioanl environment variables. Leave blank or don't add to code to ignore them:
+```python
+# By default name is "sh000_00_track_v001".
+os.environ["MMEXPORTER_CUSTOM_DEFAULT_NAME"] = ""
+
+# By default pattern is "[seq_name]_sh<shot_number>_<task_number>_track_v000_[definition]".
+os.environ["MMEXPORTER_CUSTOM_NAME_PATTERN"] = ""
+
+# Path to custom log path. Default is "/match-move-exporter/logs/log.log".
+os.environ["MMEXPORTER_CUSTOM_LOG_PATH"] = ""
+
+# Assign value "1", if lens distortion plugins already installed to Nuke.
+# Otherwise, path will be "/plugins/3de4_lens_distortion_plugin_kit"
+os.environ["MMEXPORTER_NUKE_LENS_PLUGINS_INSTALLED"] = ""
+
+# Assign value "1", to name export folder as version + postfix.
+# Otherwise, it will has full name.
+os.environ["MMEXPORTER_EXPORT_FOLDER_IS_VERSION"] = ""
+```
+Also:
+- You can delete `launcher` folder.
+- You can delete `plugins` folder if you use `MMEXPORTER_NUKE_LENS_PLUGINS_INSTALLED` and lens already installed to Nuke.
 
 
 ### 3DEqualizer knowledge base:

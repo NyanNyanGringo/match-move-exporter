@@ -102,13 +102,20 @@ def button_clicked_callback(requester, widget, action) -> None:
     LOGGER.info(f"New callback from widget {widget} received, action: {action}")
     export_tracking_data_through_nuke(script_name=tde4.getWidgetValue(requester, "textfield_name"))
 
-
 def label_changed_callback(requester, widget, action) -> None:
     LOGGER.info(f"New callback from widget {widget} received, action: {action}")
 
 
 def _MatchMoveExporterUpdate(requester) -> None:
     LOGGER.info("New update callback received, put your code here...")
+
+    custom_name_pattern = os.getenv("MMEXPORTER_CUSTOM_NAME_PATTERN")
+    if custom_name_pattern:
+        tde4.setWidgetLabel(requester, "label_pattern", custom_name_pattern)
+
+    custom_default_name = os.getenv("MMEXPORTER_CUSTOM_DEFAULT_NAME")
+    if custom_name_pattern:
+        tde4.setWidgetValue(requester, "textfield_name", custom_default_name)
 
 
 # 3DE4 FUNCTIONS
@@ -128,8 +135,7 @@ def export_tracking_data_through_nuke(script_name: str):
 
     # get Nuke Script path and create folder for export
     nuke_script_path = get_nuke_script_path(path=os.path.dirname(tde4.getProjectPath()),
-                                            script_name=script_name,
-                                            dir_folder_is_version=True)
+                                            script_name=script_name)
     LOGGER.info(f"nuke_script_path: {nuke_script_path}")
 
     # check if folder already exists. ask to delete it.
@@ -140,13 +146,18 @@ def export_tracking_data_through_nuke(script_name: str):
     json_for_nuke_path = JsonForNuke().get_json_path()
     LOGGER.info(f"json_for_nuke_path: {json_for_nuke_path}")
 
+    # PATHS_TO_ADD_TO_NUKE_PATH
+    PATHS_TO_ADD_TO_NUKE_PATH = []
+    if not os.getenv("MMEXPORTER_NUKE_LENS_PLUGINS_INSTALLED"):
+        PATHS_TO_ADD_TO_NUKE_PATH.append(get_3de4_lenses_for_nuke_path())
+
     # execute
     execute_nuke_script(NUKE_EXECUTABLE,  # nuke_exec_path
                         nuke_pyscript,  # py_script_path
                         nuke_script_path,  # args: add nuke script path
                         json_for_nuke_path,  # args: add json data path
                         PATHS_TO_ADD_TO_PYTHONPATH=[get_root_path()],  # kwargs: add access to lib folder for nuke
-                        PATHS_TO_ADD_TO_NUKE_PATH=[get_3de4_lenses_for_nuke_path()]  # kwargs: add access to 3de4 plugins
+                        PATHS_TO_ADD_TO_NUKE_PATH=PATHS_TO_ADD_TO_NUKE_PATH  # kwargs: add access to 3de4 plugins
                         )
 
 
