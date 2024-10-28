@@ -14,8 +14,7 @@ from random import random
 from lib.utilities.log_utilities import setup_or_get_logger
 from lib.utilities.os_utilities import open_in_explorer
 from lib.utilities.nuke_utilities import import_file_as_read_node, import_nodes_from_script, \
-    animate_array_knob_values, animate_xyz_knob_values
-
+    animate_array_knob_values, animate_xyz_knob_values, copy_paste_node
 
 # config
 
@@ -87,11 +86,20 @@ def _get_undistort_from_script(script_path: str) -> [nuke.Node]:
     undistort.setName("UNDISTORT")
     return undistorts
 
-def _get_camera(camera_data: dict) -> nuke.Node:
+def _get_camera(camera_data: dict, read_node: nuke.Node = None,
+                undistort: nuke.Node = None, for_3d_export:bool = False) -> nuke.Node:
+    """
+    Create Camera3 nuke.Node according to camera_data from 3DEqualizer.
+
+    :param camera_data: data from 3D equalizer about Camera.
+    :param read_node: Nuke Read node to take dimensions for focal length from.
+    :param for_3d_export: if True, converts focal length to work with undistorted + reformatted image.
+    :return: nuke.Node
+    """
     # create axis
     # PS: I haven't seen situation when axis needed -
     # don't implement now.
-
+    # 2880/3231*curve
     # create camera, set knob values
     camera = _create_node("Camera3")
     camera["label"].setValue(camera_data['name'])
@@ -109,6 +117,21 @@ def _get_camera(camera_data: dict) -> nuke.Node:
                               first_frame=OFFSET)
     camera["haperture"].setValue(camera_data["haperture"])
     camera["vaperture"].setValue(camera_data["vaperture"])
+
+    if for_3d_export:
+        undistort_copy = nuke.clone(undistort)
+        crop_with_reformat = _create_crop_with_reformat()
+
+        undistort_copy.setInput(0, read_node)
+        crop_with_reformat.setInput(0, undistort_copy)
+
+        box: tuple = crop_with_reformat["box"].value()
+        width_with_undistort = abs(box[0]) + abs(box[2])
+
+        camera["focal"].setExpression(f"{camera_data['width']} / {width_with_undistort} * curve")
+
+        nuke.delete(undistort_copy)
+        nuke.delete(crop_with_reformat)
 
     return camera
 
@@ -284,7 +307,7 @@ def _create_write_stmap(intermediate_name: str = None) -> nuke.Node:
         filepath += f"{intermediate_name}/"
     filepath += "stmap/[file rootname [basename [value root.name]]].####.exr"
     write["file"].setValue(filepath)
-    write["colorspace"].setValue("linear")
+    write["raw"].setValue(True)
     write["file_type"].setValue("exr")
     write["compression"].setValue("Zip")
     write["create_directories"].setValue(True)
@@ -300,7 +323,7 @@ def _create_write_undistort(intermediate_name: str = None) -> nuke.Node:
         filepath += f"{intermediate_name}/"
     filepath += "undistort/[file rootname [basename [value root.name]]].####.exr"
     write["file"].setValue(filepath)
-    write["colorspace"].setValue("linear")
+    write["raw"].setValue(True)
     write["file_type"].setValue("exr")
     write["compression"].setValue("DWAA")
     write["create_directories"].setValue(True)
@@ -442,13 +465,19 @@ def _shuffle_and_render_nodes(nodes_data) -> None:
         # crop
         crop = _create_crop()
         crop.setInput(0, read)
-        y_pos += 86
+        y_pos += 96
         crop.setXYpos(x_pos, y_pos)
+
+        # undistort
+        undistort = read_group["undistort"]
+        undistort.setInput(0, crop)
+        y_pos += 60
+        undistort.setXYpos(x_pos, y_pos)
 
         # color nodes
         color_nodes = read_group["color_nodes"]
         current_node = None
-        previous_node = crop
+        previous_node = undistort
         for i in range(0, len(color_nodes)):
             current_node = color_nodes[i]
 
@@ -461,16 +490,10 @@ def _shuffle_and_render_nodes(nodes_data) -> None:
             current_node.setXYpos(x_pos, y_pos)
             y_pos += 26
 
-        # undistort
-        undistort = read_group["undistort"]
-        undistort.setInput(0, current_node)
-        y_pos += 60
-        undistort.setXYpos(x_pos, y_pos)
-
         # dot + scanline + camera + merge
         y_pos += 120
 
-        dot = _create_node("Dot", undistort)
+        dot = _create_node("Dot", current_node)
         dot.setXYpos(x_pos + 34, y_pos + 4)
 
         camera = read_group["camera"]
@@ -490,14 +513,20 @@ def _shuffle_and_render_nodes(nodes_data) -> None:
         # offset for next read_group
         x_offset += 500
 
-        # render writes
+        # get intermediate_name
         intermediate_name = read_group["name"] if index else None
+
+        # render geo
+        camera_for_3d_export = read_group["camera_for_3d_export"]
+        scene.setInput(scene.inputs(), camera_for_3d_export)
+        _render_geo(from_node=scene, intermediate_name=intermediate_name)
+        nuke.delete(camera_for_3d_export)
+
+        # render stmap, undistort and dailies
         _render_stmap(from_node=crop, undistort=undistort, intermediate_name=intermediate_name)
         _render_undistort(from_node=undistort, intermediate_name=intermediate_name)
         _render_dailies(from_node=merge, intermediate_name=intermediate_name)
-        scene.setInput(scene.inputs(), camera)
-        _render_geo(from_node=scene, intermediate_name=intermediate_name)
-        scene.setInput(scene.inputs()-1, None)
+
 
 
 # start
@@ -510,15 +539,18 @@ def _start():
 
     read_groups = []
     for camera_data in JSON_DATA["cameras"]:
-        camera = _get_camera(camera_data)
         read = import_file_as_read_node(camera_data["source"]["path"])
+        read["raw"].setValue(True)
         softclip = _create_soft_clip_node(camera_data)
         grade = _create_grade_node(camera_data)
         colorspace_node = _create_node("Colorspace", knobs={"colorspace_in": "sRGB"})
         undistort = _get_undistort_from_script(camera_data["undistort_script_path"])[0]
+        camera = _get_camera(camera_data)
+        camera_for_3d_export = _get_camera(camera_data, read_node=read, undistort=undistort, for_3d_export=True)
 
         read_groups.append({
             "camera": camera,
+            "camera_for_3d_export": camera_for_3d_export,
             "read": read,
             "color_nodes": [softclip, grade, colorspace_node],
             "undistort": undistort,

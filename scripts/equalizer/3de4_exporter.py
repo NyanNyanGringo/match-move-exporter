@@ -216,7 +216,9 @@ class JsonForNuke:
                     "white_point": 0.0,
                     "gamma": 0.0,
                     "softclip": 0.0
-                }
+                },
+                "width": 0,
+                "height": 0
             },
         ],
         "point_groups": [
@@ -326,8 +328,9 @@ class JsonForNuke:
                 "path": tde4.getCameraPath(camera),
                 "black_white": tde4.getCamera8BitColorBlackWhite(camera),
                 "gamma": tde4.getCamera8BitColorGamma(camera),
-                "softclip": tde4.getCamera8BitColorSoftclip(camera)
-            }
+                "softclip": tde4.getCamera8BitColorSoftclip(camera)},
+            "width": tde4.getCameraImageWidth(camera),
+            "height": tde4.getCameraImageHeight(camera),
         }
 
         return camera_dict

@@ -321,3 +321,37 @@ def animate_array_knob_values(knob,  # nuke.Array_Knob
     for i, value in enumerate(values):
         frame = first_frame + i
         knob.setValueAt(value, frame)
+
+
+def declone_node(node):
+    """
+    Copy from nukescripts.misc file
+
+    :param node: nuke.Node
+    :return: nuke.Node
+    """
+    if node.clones() == 0:
+        return node
+    args = node.writeKnobs(nuke.WRITE_ALL | nuke.WRITE_USER_KNOB_DEFS | nuke.WRITE_NON_DEFAULT_ONLY | nuke.TO_SCRIPT)
+    with node.parent():
+        newnode = nuke.createNode(node.Class(), knobs = args)
+    nuke.inputs(newnode, nuke.inputs(node))
+    num_inputs = nuke.inputs(node)
+    for i in range(num_inputs):
+     newnode.setInput(i, node.input(i))
+    node.setInput(0, newnode)
+    nuke.delete(node)
+    return newnode
+
+
+def copy_paste_node(node):
+    """
+
+    :param node: nuke.Node
+    :return: nuke.Node
+    """
+    # new_node = nuke.clone(node)
+    # new_node = declone_node(new_node)
+    # new_node.setName(node.name())
+    # return new_node
+    return nuke.clone(node)
