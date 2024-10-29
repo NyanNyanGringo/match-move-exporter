@@ -1,20 +1,13 @@
 # MatchMoveExporter
 
 
-###### Requires: 3DEqualizer 7.1+, Nuke 14.0+
+###### Требования: Windows, 3DEqualizer 7.1+, Nuke 14.0+
 
+Создано студией [DobroCCS](https://dobrocreative.com/en)  
+Автор: [Владислав Парфентьев](https://t.me/VladislavParfentev).
+Особая благодарность: [Юрий Бодоланов](https://t.me/bodolanov)
 
-#### [Watch YouTube guide (in progress)](https://i.pinimg.com/originals/09/2c/72/092c72db80eae3f31b8420ed8e60bc73.jpg)
-
-
-Export **all** 3D tracking data from 3DEqualizer in **one click**:
-- Geo
-- STmap
-- Undistort
-- Alembic and FBX
-- Dailies (.mov)
-- Nuke project
-
+![explorer_toAYveb81o.png](resources%2Fexplorer_toAYveb81o.png)
 
 ### Windows installation for artists:
 
@@ -23,15 +16,6 @@ Export **all** 3D tracking data from 3DEqualizer in **one click**:
 - EQUALIZER_EXECUTABLE_PATH (path to 3DE4.exe)
 - NUKE_EXECUTABLE_PATH (path to Nuke.exe)
 3. Launch `launcher/launch_3de4.cmd` and run `MMExporter/MatchMove Exporter` action.
-
-
-### MacOS installation for artists:
-in progress...
-
-
-### Linux installation for artists:
-in progress...
-
 
 ### Pipeline integration:
 Place `match-move-exporter` folder (contains `MatchMoveExporter`) somewhere.
