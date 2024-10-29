@@ -355,9 +355,9 @@ def _create_write_geo(file_type: str, intermediate_name: str = None) -> nuke.Nod
 
 
 def _render_dailies(from_node: nuke.Node, intermediate_name: str = None, cleanup_after_render: bool = False) -> None:
-    crop = _create_crop()
-    reformat = _create_node("Reformat", knobs={"type": "to_box", "box_width": 2048})
     crop_reformat = _create_crop_with_reformat()
+    reformat = _create_node("Reformat", knobs={"type": "to box", "box_width": 2048})
+    crop = _create_crop()
     write = _create_write_dailies(intermediate_name)
     nodes_to_cleanup = [crop, reformat, crop_reformat, write]
 
