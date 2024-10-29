@@ -1,20 +1,20 @@
 # MatchMoveExporter
 
-[![en](https://img.shields.io/badge/lang-english_-blue.svg)](https://github.com/NyanNyanGringo/match-move-exporter/blob/main/README.en.md)
+[![](https://img.shields.io/badge/return-home_-blue.svg)](https://github.com/NyanNyanGringo/match-move-exporter)
 
-###### Требования: Windows, 3DEqualizer 7.1+, Nuke 14.0+
+###### Requirements: Windows, 3DEqualizer 7.1+, Nuke 14.0+
 
-Создано студией [DobroCCS](https://dobrocreative.com/en)  
-Автор: [Владислав Парфентьев](https://t.me/VladislavParfentev).
-Особая благодарность: [Юрий Бодоланов](https://t.me/bodolanov)
+Created by [DobroCCS](https://dobrocreative.com/en)  
+Author: [Vladislav Parfentev](https://t.me/VladislavParfentev).
+Special thanks to: [Yury Bodolanov](https://t.me/bodolanov)
 
 ---
 
-### Экспорт трекинг-даты из 3DEqualizer по одной кнопке
+### Export tracking data from 3DEqualizer with one button
 
 ![3DE4_rXrdtNS6ux.png](resources%2F3DE4_rXrdtNS6ux.png)
 
-Структура файлов после экспорта. Папка со всеми файлами создается рядом со скриптом 3DEqualizer.
+File structure after export. A folder with all files is created next to the 3DEqualizer script.
 ```javascript
 ├── geo
 │   └── geometry.obj
@@ -31,21 +31,21 @@
 
 ---
 
-### Установка для исполнителей (Windows)
+### Windows installation for artists:
 
-1. Скачайте репозиторий и разархивируйте в любое удобное место:
+1. Download the repository to any folder.
 ![browser_MDE9dB50sq.png](resources%2Fbrowser_MDE9dB50sq.png)
-2. В файле `launcher/launch_3de4.cmd`, измените путь до `3DE4.exe` и `Nuke.exe`:
+2. In the `launcher/launch_3de4.cmd` file, change the path to `3DE4.exe` and `Nuke.exe`:
 ![Notepad_LXr38f0deO.png](resources%2FNotepad_LXr38f0deO.png)
-3. Запустите `launcher/launch_3de4.cmd`. У вас появится меню `MMExporter` внизу программы.
+3. Run `launcher/launch_3de4.cmd`. You will see the `MMExporter` menu at the bottom of the program:
 ![3DE4_bVBTTrs462.png](resources%2F3DE4_bVBTTrs462.png)
 
 ---
 
-### Интеграция в студийный пайплайн:
-Поместите папку `match-move-exporter` (содержит `MatchMoveExporter`) в любое место.
+### Pipeline integration:
+Place `match-move-exporter` folder (contains `MatchMoveExporter`) somewhere.
 
-Ниже представлены необходимые переменные окружения:
+Here is necessary environment variables to run 3DEqualizer4:
 ```python
 import os
 import subprocess
@@ -61,7 +61,7 @@ os.environ["PYTHON_CUSTOM_SCRIPTS_3DE4"] = root_path + os.path.pathsep + scripts
 # Run 3DEqualizer.
 subprocess.run(["/path/to/3DE4.exe"])
 ```
-Необязательные переменные среды. Оставьте пустыми или не добавляйте в код, чтобы игнорировать их:
+Optioanl environment variables. Leave blank or don't add to code to ignore them:
 ```python
 # By default name is "sh000_00_track_v001".
 os.environ["MMEXPORTER_CUSTOM_DEFAULT_NAME"] = ""
@@ -80,13 +80,13 @@ os.environ["MMEXPORTER_NUKE_LENS_PLUGINS_INSTALLED"] = ""
 # Otherwise, it will has full name.
 os.environ["MMEXPORTER_EXPORT_FOLDER_IS_VERSION"] = ""
 ```
-Вы можете удалить папки `launcher` и `resources`. 
+You can delete `launcher` and `resources` folders.
 
-Вы можете удалить папку `plugins`, если используете `MMEXPORTER_NUKE_LENS_PLUGINS_INSTALLED` и [линзы](https://www.3dequalizer.com/?site=tech_docs&id=110216_01) уже установлены в Nuke.
+You can delete `plugins` folder if you use `MMEXPORTER_NUKE_LENS_PLUGINS_INSTALLED` and [lenses](https://www.3dequalizer.com/?site=tech_docs&id=110216_01) already installed to Nuke.
 
 ---
 
-### 3DEqualizer база знаний:
+### 3DEqualizer knowledge base:
 
 - [Python scripting interface 3DE4 R7.1](https://www.3dequalizer.com/user_daten/sections/tech_docs/txt/py_doc_r7.1.txt)
 - [Python Vector Library](https://www.3dequalizer.com/user_daten/sections/tech_docs/vl/html/vl.xhtml)
