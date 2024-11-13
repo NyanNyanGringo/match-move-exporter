@@ -15,11 +15,8 @@ from MatchMoveExporter.lib.utilities.log_utilities import setup_or_get_logger
 from MatchMoveExporter.lib.utilities.os_utilities import open_in_explorer
 from MatchMoveExporter.lib.utilities.nuke_utilities import import_file_as_read_node, import_nodes_from_script, \
     animate_array_knob_values, animate_xyz_knob_values, copy_paste_node
-
-# config
-
-
-GEO_FOLDER_NAME = "geo"
+from MatchMoveExporter.lib.utilities.userconfig_utilities import CameraConfig
+from MatchMoveExporter.userconfig import UserConfig
 
 
 # setup logger from lib
@@ -128,7 +125,12 @@ def _get_camera(camera_data: dict, read_node: nuke.Node = None,
         box: tuple = crop_with_reformat["box"].value()
         width_with_undistort = abs(box[0]) + abs(box[2])
 
-        camera["focal"].setExpression(f"{camera_data['width']} / {width_with_undistort} * curve")
+        camera_config = UserConfig.get_3d_camera_configuration()
+        if camera_config == CameraConfig.ADJUST_FOCAL:
+            camera["focal"].setExpression(f"{camera_data['width']} / {width_with_undistort} * curve")
+        elif camera_config == CameraConfig.ADJUST_APERTURE:
+            camera["haperture"].setExpression(f"{width_with_undistort} / {camera_data['width']} * {camera_data['haperture']}")
+            camera["vaperture"].setExpression(f"{width_with_undistort} / {camera_data['width']} * {camera_data['vaperture']}")
 
         nuke.delete(undistort_copy)
         nuke.delete(crop_with_reformat)
@@ -154,7 +156,8 @@ def _create_soft_clip_node(camera_data: dict, connect_to: nuke.Node = None) -> n
 
 def _create_read_geo_node(geo_path: str) -> nuke.Node:
     read_geo = nuke.createNode('ReadGeo2', "file {" + geo_path + "}", inpanel=False)
-    read_geo["file"].setValue(f"[file dirname [value root.name]]/{GEO_FOLDER_NAME}/{os.path.basename(geo_path)}")
+    geo_folder_path = UserConfig.get_geo_folder_name()
+    read_geo["file"].setValue(f"[file dirname [value root.name]]/{geo_folder_path}/{os.path.basename(geo_path)}")
 
     for knob in ["display", "render_mode"]:
         read_geo[knob].setValue("wireframe")
@@ -164,7 +167,7 @@ def _create_read_geo_node(geo_path: str) -> nuke.Node:
 def _create_read_geo_nodes(geo_paths: list) -> list:
     read_geo_nodes = []
 
-    common_geo_path = os.path.join(os.path.dirname(NUKE_SCRIPT), GEO_FOLDER_NAME)
+    common_geo_path = os.path.join(os.path.dirname(NUKE_SCRIPT), UserConfig.get_geo_folder_name())
     os.makedirs(common_geo_path, exist_ok=True)
     for geo_path in geo_paths:
         if not os.path.exists(geo_path):
@@ -323,13 +326,17 @@ def _create_write_undistort(intermediate_name: str = None) -> nuke.Node:
         filepath += f"{intermediate_name}/"
     filepath += "undistort/[file rootname [basename [value root.name]]].####.exr"
     write["file"].setValue(filepath)
-    write["raw"].setValue(True)
-    write["file_type"].setValue("exr")
-    write["compression"].setValue("DWAA")
+    # write["raw"].setValue(True)
+    # write["file_type"].setValue("exr")
+    # write["compression"].setValue("DWAA")
     write["create_directories"].setValue(True)
     write["first"].setValue(FIRST_FRAME)
     write["last"].setValue(LAST_FRAME)
     write["use_limit"].setValue(True)
+
+    for knob_name, value in UserConfig.get_undistort_configuration().items():
+        write[knob_name].setValue(value)
+
     return write
 
 def _create_write_geo(file_type: str, intermediate_name: str = None) -> nuke.Node:
@@ -418,6 +425,8 @@ def _render_geo(from_node: nuke.Node, intermediate_name: str = None) -> None:
 
     write_geo_fbx.setInput(0, from_node)
     write_geo_abc.setInput(0, from_node)
+
+    nuke.scriptSave(NUKE_SCRIPT)
 
     nuke.render(write_geo_fbx)
     nuke.render(write_geo_abc)

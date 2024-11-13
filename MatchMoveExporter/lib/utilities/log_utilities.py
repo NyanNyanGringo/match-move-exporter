@@ -3,23 +3,7 @@ import logging
 import os
 import sys
 
-from MatchMoveExporter.lib.utilities.os_utilities import get_root_path
-
-
-def get_log_file_path(create_log_dir: bool = True) -> str:
-    if os.getenv("MMEXPORTER_CUSTOM_LOG_PATH"):
-        return os.path.join(os.environ["MMEXPORTER_CUSTOM_LOG_PATH"])
-
-    path = os.path.join(
-        get_root_path(),
-        "logs",
-        "logs.log"
-    )
-
-    if create_log_dir:
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-
-    return path
+from MatchMoveExporter.userconfig import UserConfig
 
 
 def get_log_level() -> int:
@@ -69,7 +53,7 @@ def setup_or_get_logger(force_setup: bool = False, use_console_handler: bool = F
     logger.setLevel(get_log_level())
 
     # file_handler
-    file_handler = logging.FileHandler(get_log_file_path())
+    file_handler = logging.FileHandler(UserConfig.get_log_file_path())
     file_handler.setLevel(get_log_level())
     file_handler.setFormatter(logging.Formatter(get_log_format()))
     logger.addHandler(file_handler)

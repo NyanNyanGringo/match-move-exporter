@@ -20,6 +20,7 @@ from MatchMoveExporter.lib.utilities.os_utilities import get_root_path, get_3de4
 from MatchMoveExporter.lib.utilities.nuke_utilities import get_export_pyscript, execute_nuke_script, get_nuke_script_path
 from MatchMoveExporter.lib.utilities.log_utilities import setup_or_get_logger
 from MatchMoveExporter.lib.utilities.export_nuke_LD_3DE4_Lens_Distortion_Node import exportNukeDewarpNode
+from MatchMoveExporter.userconfig import UserConfig
 
 
 LOGGER = setup_or_get_logger(force_setup=True, use_console_handler=False)
@@ -109,13 +110,8 @@ def label_changed_callback(requester, widget, action) -> None:
 def _MatchMoveExporterUpdate(requester) -> None:
     LOGGER.info("New update callback received, put your code here...")
 
-    custom_name_pattern = os.getenv("MMEXPORTER_CUSTOM_NAME_PATTERN")
-    if custom_name_pattern:
-        tde4.setWidgetLabel(requester, "label_pattern", custom_name_pattern)
-
-    custom_default_name = os.getenv("MMEXPORTER_CUSTOM_DEFAULT_NAME")
-    if custom_name_pattern:
-        tde4.setWidgetValue(requester, "textfield_name", custom_default_name)
+    tde4.setWidgetValue(requester, "textfield_name", UserConfig.get_default_name())
+    tde4.setWidgetLabel(requester, "label_pattern", UserConfig.get_name_pattern())
 
 
 # 3DE4 FUNCTIONS
@@ -148,8 +144,9 @@ def export_tracking_data_through_nuke(script_name: str):
 
     # PATHS_TO_ADD_TO_NUKE_PATH
     PATHS_TO_ADD_TO_NUKE_PATH = []
-    if not os.getenv("MMEXPORTER_NUKE_LENS_PLUGINS_INSTALLED"):
-        PATHS_TO_ADD_TO_NUKE_PATH.append(get_3de4_lenses_for_nuke_path())
+    lenses_path = UserConfig.get_3de4_lenses_for_nuke_path()
+    if lenses_path:
+        PATHS_TO_ADD_TO_NUKE_PATH.append(lenses_path)
 
     # execute
     execute_nuke_script(NUKE_EXECUTABLE,  # nuke_exec_path

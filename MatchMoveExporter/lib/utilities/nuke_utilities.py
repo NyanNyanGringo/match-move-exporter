@@ -10,6 +10,7 @@ import tempfile
 
 from MatchMoveExporter.lib.utilities.cmd_utilities import run_terminal_command, correct_path_to_console_path
 from MatchMoveExporter.lib.utilities.os_utilities import get_version_with_postfix
+from MatchMoveExporter.userconfig import UserConfig
 
 
 MOV_EXTENSIONS = [".mov", ".mp4"]
@@ -129,9 +130,7 @@ def get_nuke_script_path(path: str, script_name: str) -> str:
     with regexp from script_name).
     :return: path to Nuke script.
     """
-    folder = script_name
-    if os.getenv("MMEXPORTER_EXPORT_FOLDER_IS_VERSION"):
-        folder = get_version_with_postfix(script_name)
+    folder = UserConfig.get_export_folder_name(script_name)
 
     nuke_script_path = os.path.join(
         path,
