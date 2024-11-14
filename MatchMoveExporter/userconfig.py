@@ -1,22 +1,8 @@
 """
-In this file you can setup MatchMoveExporter:
-- Default name: use constant or use your own logic (for example combine regexp and script name)
-- Default pattern: use constant
-- Change logs path
-- Turn on/off custom lens distortion
-- Change logic of getting folder name
-- Choose Camera for 3D: use as it is or change aperture or focal to undistorted material
-- Choose which files to export
+In this file you can setup MatchMoveExporter for self- or studio- pipeline.
 
-
-# TODO: Configuration through userconfig.py. Can turn on/off output files.
-# TODO: Camera for 3D - change aperture, not focal.
-# TODO: Undistort: create second with downscale.
-# TODO: Undistort: .jpg, sRGB support (check sRGB work correct)
-# TODO: Undistort: save also .nk file with undistort only
+# TODO: copy nuke undistort path = use with intermediate name
 # TODO: Use dailies Gizmo
-# TODO: .fbx/.abc - opportunity to separate.
-# TODO: Export also .mel.
 # TODO: User Frame Range in Read node.
 """
 
@@ -32,20 +18,19 @@ class UserConfig:
     export_geo: bool = True
     export_stmap: bool = True
     export_undistort: bool = True
-    export_undistort_downscale: bool = False
+    export_undistort_downscale: bool = True
     export_tde4_project: bool = True
     export_abc: bool = True
     export_fbx: bool = True
     export_dailies: bool = True
     export_nk_project: bool = True
     export_undistortn_nk_project: bool = False
-    # export_maya: bool = False  # not implemented yet
+    export_maya: bool = False
 
     # Other
-    separate_cam_and_geo_in_abc: bool = False
-    separate_cam_and_geo_in_fbx: bool = False
+    separate_cam_and_geo: bool = False
 
-    @staticmethod  #
+    @staticmethod
     def get_default_name() -> str:
         """
         You can write your custom logic for getting Default Name.
@@ -54,7 +39,7 @@ class UserConfig:
         """
         return "sh000_00_track_v001"
 
-    @staticmethod  #
+    @staticmethod
     def get_name_pattern() -> str:
         """
         You can write your custom logic for getting Name Pattern.
@@ -62,7 +47,7 @@ class UserConfig:
         """
         return "[seq_name]_sh<shot_number>_<task_number>_track_v000_[definition]"
 
-    @staticmethod  #
+    @staticmethod
     def get_log_file_path() -> str:
         """
         You can write your custom logic for getting Log Path.
@@ -78,11 +63,11 @@ class UserConfig:
 
         return path
 
-    @staticmethod  #
+    @staticmethod
     def get_geo_folder_name() -> str:
         return "geo"
 
-    @staticmethod  #
+    @staticmethod
     def get_3de4_lenses_for_nuke_path() -> str:
         """Return path to 3DE4 Lens Distortion plugin for Nuke.
         You can write your custom logic.
@@ -90,7 +75,7 @@ class UserConfig:
         return empty string."""
         return os.path.join(get_root_path(), "plugins", "3de4_lens_distortion_plugin_kit")
 
-    @staticmethod  #
+    @staticmethod
     def get_export_folder_name(name: str) -> str:
         """
         You can write your custom logic for getting Export Folder.
@@ -103,7 +88,7 @@ class UserConfig:
         """
         return get_version_with_postfix(name)
 
-    @staticmethod  #
+    @staticmethod
     def get_undistort_configuration() -> dict:
         """
         You can write your custom logic for getting Undistort Write Node values.
@@ -133,7 +118,7 @@ class UserConfig:
 
         return knob_values, downscale_width
 
-    @staticmethod  #
+    @staticmethod
     def get_3d_camera_configuration() -> CameraConfig:
         """
         Determines how to adjust Camera configuration in .abc and .fbx files.

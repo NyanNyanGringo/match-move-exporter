@@ -16,7 +16,8 @@ import re
 import shutil
 import tempfile
 
-from MatchMoveExporter.lib.utilities.os_utilities import get_root_path, get_3de4_lenses_for_nuke_path
+from MatchMoveExporter.lib.utilities.export_maya import _maya_export_mel_file
+from MatchMoveExporter.lib.utilities.os_utilities import get_root_path, get_temp_filepath
 from MatchMoveExporter.lib.utilities.nuke_utilities import get_export_pyscript, execute_nuke_script, get_nuke_script_path
 from MatchMoveExporter.lib.utilities.log_utilities import setup_or_get_logger
 from MatchMoveExporter.lib.utilities.export_nuke_LD_3DE4_Lens_Distortion_Node import exportNukeDewarpNode
@@ -59,13 +60,17 @@ def check_nuke_script_name() -> bool:
     """Check name entered by the user."""
     nuke_script_name: str = tde4.getWidgetValue(requester, "textfield_name")
 
-    if nuke_script_name.strip():
-        return True
+    if not nuke_script_name.strip():
+        message = "Parameter name can't be empty."
+        tde4.postQuestionRequester("Message", message, "OK")
+        return False
 
-    message = "Parameter name can't be empty."
-    tde4.postQuestionRequester("Message", message, "OK")
+    if not re.findall("_v\d+", nuke_script_name):
+        message = "Please specify version in name."
+        tde4.postQuestionRequester("Message", message, "OK")
+        return False
 
-    return False
+    return True
 
 def check_project_exists() -> bool:
     """Check any 3DE4 project opened."""
@@ -250,7 +255,8 @@ class JsonForNuke:
                     },
                 "geo": [".../Temp/SomeGeo.obj", ...]
                 ],
-        "3de4_project_path": ".../path/to/equalizer_project.3de"
+        "3de4_project_path": ".../path/to/equalizer_project.3de",
+        "maya_project_path": ".../Temp/temp_maya_script_from_mmexporter.mel",
     }
         """
         first_camera = tde4.getFirstCamera()
@@ -265,7 +271,9 @@ class JsonForNuke:
 
             "cameras": self.get_cameras_list(),
             "point_groups": self.get_point_group_list(),
-            "3de4_project_path": tde4.getProjectPath()
+            "3de4_project_path": tde4.getProjectPath(),
+
+            "maya_project_path": self.get_maya_temp_project_path()
         }
 
         return JSON
@@ -273,12 +281,7 @@ class JsonForNuke:
     def get_camera_dict(self, camera) -> dict:
         offset = tde4.getCameraFrameOffset(camera)
         camera_name = validName(tde4.getCameraName(camera))
-
-        nk_undistort_path = os.path.join(
-            tempfile.gettempdir(),
-            f"undistort_for_{camera_name}.nk"
-        )
-        os.makedirs(os.path.dirname(nk_undistort_path), exist_ok=True)
+        nk_undistort_path = get_temp_filepath(f"undistort_for_{camera_name}.nk")
         exportNukeDewarpNode(camera, offset, nk_undistort_path)
 
         camera_translate_x, camera_translate_y, camera_translate_z = [], [], []
@@ -385,13 +388,14 @@ class JsonForNuke:
 
         # collect geo of point group
         geo = []
-        for model in tde4.get3DModelList(pg, 0):  # 0 means selected only False
+        if UserConfig.export_geo:
+            for model in tde4.get3DModelList(pg, 0):  # 0 means selected only False
 
-            if not tde4.get3DModelVisibleFlag(pg, model):
-                continue
+                if not tde4.get3DModelVisibleFlag(pg, model):
+                    continue
 
-            filepath = get_obj_filepath(pg, model)
-            geo.append(filepath)
+                filepath = get_obj_filepath(pg, model)
+                geo.append(filepath)
 
         point_group_dict = {
             "type": tde4.getPGroupType(pg),
@@ -422,6 +426,24 @@ class JsonForNuke:
                 point_groups.append(self.get_point_group_dict(point_group, camera))
 
         return point_groups
+
+    def get_maya_temp_project_path(self) -> str:
+        temp_filepath = get_temp_filepath(f"temp_maya_script_from_mmexporter.mel")
+
+        _maya_export_mel_file(
+            path=temp_filepath,
+            campg=[pg for pg in tde4.getPGroupList() if tde4.getPGroupType(pg) == "CAMERA"][0],  # Camera Point Group
+            camera_list=tde4.getCameraList(),
+            model_selection=1,  # means 'No 3D Models At All'
+            overscan_w_pc=1.0,
+            overscan_h_pc=1.0,
+            export_material=0,  # means not to export UV textures
+            unit_scale_factor=1.0,  # cm -> cm
+            frame0=float(tde4.getCameraFrameOffset(tde4.getFirstCamera())),  # start frame
+            hide_ref=0  # means not to hires reference frames
+        )
+
+        return temp_filepath
 
 
 def get_obj_filepath(pg: int, model: int) -> str:

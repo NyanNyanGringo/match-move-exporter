@@ -2,6 +2,7 @@ import os
 import re
 import platform
 import subprocess
+import tempfile
 
 
 def get_root_path() -> str:
@@ -39,3 +40,11 @@ def open_in_explorer(path: str) -> None:
             subprocess.call(["open", "-R", path])
         else:
             subprocess.call(["nautilus", "--select", path])
+
+def get_temp_filepath(fullname: str) -> str:
+    temp_filepath = os.path.join(
+        tempfile.gettempdir(),
+        fullname
+    )
+    os.makedirs(os.path.dirname(temp_filepath), exist_ok=True)
+    return temp_filepath
