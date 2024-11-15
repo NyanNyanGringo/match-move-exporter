@@ -669,8 +669,10 @@ def _start():
         read = _setup_read_node(import_file_as_read_node(camera_data["source"]["path"]))
         version = get_version(nuke.Root().name())
         LOGGER.info(f"Version: {version}")
-        gizmo_class, gizmo_knob_values = UserConfig.setup_dailies_gizmo(camera_data["name"], version,
-                                                                        FIRST_FRAME, LAST_FRAME)
+        gizmo_class, gizmo_knob_values = UserConfig.setup_dailies_gizmo(get_name_from_filepath(nuke.Root().name()),
+                                                                        version,
+                                                                        FIRST_FRAME,
+                                                                        LAST_FRAME)
         dailies_gizmo = _create_node(gizmo_class, knobs=gizmo_knob_values) if gizmo_class else None
         softclip = _create_soft_clip_node(camera_data)
         grade = _create_grade_node(camera_data)
