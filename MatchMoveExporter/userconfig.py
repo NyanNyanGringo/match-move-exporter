@@ -1,9 +1,10 @@
 """
 In this file you can setup MatchMoveExporter for self- or studio- pipeline.
 
-# TODO: copy nuke undistort path = use with intermediate name
-# TODO: Use dailies Gizmo
-# TODO: User Frame Range in Read node.
+# TODO: change Writes to work without TCL except dailies +
+# TODO: copy nuke undistort path = use with intermediate name +
+# TODO: User Frame Range in Read node +
+# TODO: Use dailies Gizmo +
 """
 
 import os
@@ -24,11 +25,12 @@ class UserConfig:
     export_fbx: bool = True
     export_dailies: bool = True
     export_nk_project: bool = True
-    export_undistortn_nk_project: bool = False
+    export_undistort_nk_project: bool = False
     export_maya: bool = False
 
     # Other
     separate_cam_and_geo: bool = False
+    undistort_nk_project_name: str = "lens_distortion"
 
     @staticmethod
     def get_default_name() -> str:
@@ -127,3 +129,37 @@ class UserConfig:
         adjust focal or aperture.
         """
         return CameraConfig.ADJUST_FOCAL
+
+    @staticmethod
+    def get_gizmos_path() -> str:
+        """Return path to Nuke Gizmos.
+        You can write your custom logic.
+        Note: if you don't want to add any Nuke Gizmos for Nuke, just
+        return empty string."""
+        return os.path.join(get_root_path(), "plugins", "nuke_gizmos")
+
+
+    @staticmethod
+    def setup_dailies_gizmo(name: str, version: int, first: int, last: int) -> tuple:
+        """
+        Turn on/off usage of dailies gizmo. Also, setup build in gizmo or use your own - change
+        class of gizmo and knob_values. You get next arguments to set up gizmo:
+        :param name: name entered by user.
+        :param version: version from name.
+        :param first: first frame.
+        :param last: last frame.
+        :return: tuple[None, None] if you don't want to use gizmo, or tuple with gizmo class name and knob values.
+        """
+        use_dailies_gizmo = True  # set False if you don't want to use any gizmo
+        if not use_dailies_gizmo or not UserConfig.get_gizmos_path():
+            return None, None
+
+        class_ = "mmexporter_dailies_gizmo"
+        knob_values = {
+            "project": " ",
+            "artist": " ",
+            "shot": name,
+            "version": version,
+        }
+
+        return class_, knob_values

@@ -29,6 +29,13 @@ def get_name_from_filepath(filepath: str) -> str:
     return Path(filepath).with_suffix('').name
 
 
+def get_version(name: str) -> int:
+    versions = re.findall("_v\d+", name)
+    if not versions:
+        return -1
+    return int(versions[-1].replace("_v", ""))
+
+
 # if __name__ == "__main__":
 #     s = "sh000_00_track_v001.abc"
 #     print(insert_layer(s, "geo"))

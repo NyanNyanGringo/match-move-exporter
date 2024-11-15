@@ -93,7 +93,6 @@ def check_and_remove_files_in_existed_path(path) -> bool:
                                                   f"Continue?", "Yes", "No")
         if request == 1:  # 1 is True, 2 is False
             shutil.rmtree(folder_path)
-            os.mkdir(folder_path)
             return True
         else:
             return False
@@ -143,6 +142,8 @@ def export_tracking_data_through_nuke(script_name: str):
     if not check_and_remove_files_in_existed_path(nuke_script_path):
         return
 
+    os.makedirs(os.path.dirname(nuke_script_path), exist_ok=True)
+
     # get json data from 3DEqualizer to use it in Python Script
     json_for_nuke_path = JsonForNuke().get_json_path()
     LOGGER.info(f"json_for_nuke_path: {json_for_nuke_path}")
@@ -153,13 +154,17 @@ def export_tracking_data_through_nuke(script_name: str):
     if lenses_path:
         PATHS_TO_ADD_TO_NUKE_PATH.append(lenses_path)
 
+    gizmos_path = UserConfig.get_gizmos_path()
+    if gizmos_path:
+        PATHS_TO_ADD_TO_NUKE_PATH.append(gizmos_path)
+
     # execute
     execute_nuke_script(NUKE_EXECUTABLE,  # nuke_exec_path
                         nuke_pyscript,  # py_script_path
-                        nuke_script_path,  # args: add nuke script path
-                        json_for_nuke_path,  # args: add json data path
-                        PATHS_TO_ADD_TO_PYTHONPATH=[get_root_path()],  # kwargs: add access to lib folder for nuke
-                        PATHS_TO_ADD_TO_NUKE_PATH=PATHS_TO_ADD_TO_NUKE_PATH  # kwargs: add access to 3de4 plugins
+                        nuke_script_path,  # add nuke script path
+                        json_for_nuke_path,  # add json data path
+                        [get_root_path()],  # add access to lib folder for nuke
+                        PATHS_TO_ADD_TO_NUKE_PATH  # add access to 3de4 plugins and dailies gizmo
                         )
 
 
@@ -188,11 +193,12 @@ class JsonForNuke:
         Generates json file in format:
         {
         "program": "3DE4" or "SynthEyes"  # name of program.
-        "offset": 0,  # frame offset. Usually 1001.
+        "offset": 0,  # usually 1001
+        "original_range": [0, 0, 0],  # original range that was used from source
+        "calculation_range": [0, 0],  # range of final calculation
         "fps": 0,
         "width": 0,  # width of the first camera.
         "height": 0,  # height of the first camera.
-        "range": [0, 0],  # range of the first camera.
         "cameras": [
             {
                 "axis": {
@@ -260,15 +266,18 @@ class JsonForNuke:
     }
         """
         first_camera = tde4.getFirstCamera()
+        calculation_range = tde4.getCameraCalculationRange(first_camera) if tde4.getCameraFrameRangeCalculationFlag(
+            first_camera) else []
         JSON = {
             "program": "3DE4",
 
             "offset": tde4.getCameraFrameOffset(first_camera),
+            "original_range": tde4.getCameraSequenceAttr(first_camera),
+            "calculation_range": calculation_range,
+
             "fps": tde4.getCameraFPS(first_camera),
             "width": tde4.getCameraImageWidth(first_camera),
             "height": tde4.getCameraImageHeight(first_camera),
-            "range": tde4.getCameraCalculationRange(first_camera),
-
             "cameras": self.get_cameras_list(),
             "point_groups": self.get_point_group_list(),
             "3de4_project_path": tde4.getProjectPath(),

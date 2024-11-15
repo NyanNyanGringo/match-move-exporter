@@ -18,7 +18,7 @@ from MatchMoveExporter.lib.utilities.os_utilities import open_in_explorer
 from MatchMoveExporter.lib.utilities.nuke_utilities import import_file_as_read_node, import_nodes_from_script, \
     animate_array_knob_values, animate_xyz_knob_values
 from MatchMoveExporter.lib.utilities.userconfig_utilities import CameraConfig
-from MatchMoveExporter.lib.utilities.name_convention_utilities import get_name_from_filepath, insert_layer
+from MatchMoveExporter.lib.utilities.name_convention_utilities import get_name_from_filepath, insert_layer, get_version
 from MatchMoveExporter.userconfig import UserConfig
 
 
@@ -35,29 +35,61 @@ else:
 # get nuke script and json data from system arguments
 
 
-NUKE_SCRIPT = sys.argv[1]
-with open(sys.argv[2], "r") as file:
+NUKE_SCRIPT = os.getenv("NUKE_SCRIPT_PATH")
+with open(os.getenv("JSON_FOR_NUKE_PATH"), "r") as file:
     JSON_DATA = json.load(file)
 
 # reduce the range of frames when develop
 
 
-if os.getenv("DEV"):
-    range_ = JSON_DATA["range"]
-    JSON_DATA["range"] = [range_[0], 2]
-    del range_
+# if os.getenv("DEV"):
+#     range_ = JSON_DATA["range"]
+#     JSON_DATA["range"] = [range_[0], 2]
+#     del range_
 
 
 # some global variables
 
 
-OFFSET = JSON_DATA["offset"]
-FIRST_FRAME = JSON_DATA["range"][0] + OFFSET - 1
-LAST_FRAME = JSON_DATA["range"][1] + OFFSET - 1
+OFFSET = JSON_DATA["offset"]  # usually 1001
+ORIGINAL_FIRST, ORIGINAL_LAST, STEP = JSON_DATA["original_range"]  # original range that was used from source
+if JSON_DATA["calculation_range"]:  # range of final calculation
+    FIRST_FRAME = JSON_DATA["calculation_range"][0] + OFFSET - 1
+    LAST_FRAME = JSON_DATA["calculation_range"][1] + OFFSET - 1
+else:
+    FIRST_FRAME = OFFSET
+    LAST_FRAME = OFFSET + ORIGINAL_LAST - ORIGINAL_FIRST
+
+LOGGER.info(f"First: {FIRST_FRAME}. Last: {LAST_FRAME}. Offset: {OFFSET}.")
+
+
+# functions
+
+
+def _get_filepath_for_write(folder_name: str = None, intermediate_name: str = None, layer_name: str = None) -> str:
+    """Return filepath for Write Node without padding and extenstion."""
+    name = get_name_from_filepath(NUKE_SCRIPT)
+    return os.path.join(
+        os.path.dirname(NUKE_SCRIPT),
+        intermediate_name if intermediate_name else "",
+        folder_name if folder_name else "",
+        insert_layer(name, layer_name) if layer_name else name
+    ).replace("\\", "/")
 
 
 # nodes functions
 
+
+def _setup_read_node(read_node: nuke.Node) -> nuke.Node:
+    read_node["raw"].setValue(True)
+
+    read_node["first"].setValue(ORIGINAL_FIRST)
+    read_node["last"].setValue(ORIGINAL_LAST)
+
+    read_node["frame_mode"].setValue("start at")
+    read_node["frame"].setValue(str(OFFSET))
+
+    return read_node
 
 def _create_node(class_: str, connect_to: nuke.Node = None, knobs: dict = None) -> nuke.Node:
     try:
@@ -79,26 +111,24 @@ def _create_node(class_: str, connect_to: nuke.Node = None, knobs: dict = None) 
 
 def _get_undistort_from_script(script_path: str) -> [nuke.Node]:
     [n.setSelected(False) for n in nuke.allNodes()]
+
     undistorts = import_nodes_from_script(script_path)
     assert len(undistorts) == 1, f"Inside {script_path} supposed to be one node!"
     undistort = undistorts[0]
     undistort["label"].setValue(undistort.name().replace("LD_3DE4_", ""))
     undistort.setName("UNDISTORT")
 
-    if JSON_DATA["program"] == "3DE4" and UserConfig.export_undistortn_nk_project:
-        shutil.copy2(script_path, os.path.join(
-            os.path.dirname(NUKE_SCRIPT),
-            insert_layer(get_name_from_filepath(NUKE_SCRIPT) + ".nk", "undistort")
-        ))
-
     return undistorts
 
-def _copy_nk_undistort_file(undistort_filepath: str):
-    if JSON_DATA["program"] == "3DE4" and UserConfig.export_undistortn_nk_project:
-        shutil.copy2(undistort_filepath, os.path.join(
-            os.path.dirname(NUKE_SCRIPT),
-            insert_layer(get_name_from_filepath(NUKE_SCRIPT) + ".nk", "undistort")
-        ))
+def _copy_nk_undistort_file(undistort_filepath: str, intermediate_name: str = None):
+    if JSON_DATA["program"] == "3DE4" and UserConfig.export_undistort_nk_project:
+        new_filepath = _get_filepath_for_write(
+            folder_name=None,
+            intermediate_name=intermediate_name,
+            layer_name=UserConfig.undistort_nk_project_name
+        ) + ".nk"
+        os.makedirs(os.path.dirname(new_filepath), exist_ok=True)
+        shutil.copy2(undistort_filepath, new_filepath)
 
 def _get_camera(camera_data: dict, read_node: nuke.Node = None,
                 undistort: nuke.Node = None, for_3d_export:bool = False) -> nuke.Node:
@@ -323,10 +353,11 @@ def _create_write_dailies(intermediate_name: str = None) -> nuke.Node:
 
 def _create_write_stmap(intermediate_name: str = None) -> nuke.Node:
     write = _create_node("Write")
-    filepath = "[file dirname [value root.name]]/"
-    if intermediate_name:
-        filepath += f"{intermediate_name}/"
-    filepath += "stmap/[file rootname [basename [value root.name]]].####.exr"
+
+    filepath = _get_filepath_for_write(folder_name="stmap",
+                                       intermediate_name=intermediate_name,
+                                       layer_name="stmap") + ".####.exr"
+
     write["file"].setValue(filepath)
     write["raw"].setValue(True)
     write["file_type"].setValue("exr")
@@ -335,15 +366,17 @@ def _create_write_stmap(intermediate_name: str = None) -> nuke.Node:
     write["first"].setValue(FIRST_FRAME)
     write["last"].setValue(LAST_FRAME)
     write["use_limit"].setValue(True)
+
+    LOGGER.info(filepath)
+
     return write
 
 def _create_write_undistort(intermediate_name: str = None) -> nuke.Node:
     write = _create_node("Write")
 
-    filepath = "[file dirname [value root.name]]/"
-    if intermediate_name:
-        filepath += f"{intermediate_name}/"
-    filepath += "undistort/[file rootname [basename [value root.name]]].####."
+    filepath = _get_filepath_for_write(folder_name="undistort",
+                                       intermediate_name=intermediate_name,
+                                       layer_name="undistort") + ".####."
 
     write["create_directories"].setValue(True)
     write["first"].setValue(FIRST_FRAME)
@@ -357,16 +390,17 @@ def _create_write_undistort(intermediate_name: str = None) -> nuke.Node:
             filepath += value
 
     write["file"].setValue(filepath)
+
+    LOGGER.info(filepath)
 
     return write
 
 def _create_write_undistort_downscale(intermediate_name: str = None) -> nuke.Node:
     write = _create_node("Write")
 
-    filepath = "[file dirname [value root.name]]/"
-    if intermediate_name:
-        filepath += f"{intermediate_name}/"
-    filepath += "undistort_downscale/[file rootname [basename [value root.name]]].####."
+    filepath = _get_filepath_for_write(folder_name="undistort_downscale",
+                                       intermediate_name=intermediate_name,
+                                       layer_name="undistort_downscale") + ".####."
 
     write["create_directories"].setValue(True)
     write["first"].setValue(FIRST_FRAME)
@@ -380,6 +414,8 @@ def _create_write_undistort_downscale(intermediate_name: str = None) -> nuke.Nod
             filepath += value
 
     write["file"].setValue(filepath)
+
+    LOGGER.info(filepath)
 
     return write
 
@@ -390,15 +426,7 @@ def _create_write_geo(file_type: str, intermediate_name: str = None, layer_name:
 
     write_geo = _create_node("WriteGeo")
 
-    filepath = "[file dirname [value root.name]]/"
-    if intermediate_name:
-        filepath += f"{intermediate_name}/"
-
-    name = get_name_from_filepath(nuke.Root().name())
-    if layer_name:
-        name = insert_layer(name, layer_name)
-
-    filepath += f"{name}.{file_type}"
+    filepath = _get_filepath_for_write(intermediate_name=intermediate_name, layer_name=layer_name) + f".{file_type}"
 
     write_geo["file"].setValue(filepath)
     write_geo["first"].setValue(FIRST_FRAME)
@@ -413,7 +441,8 @@ def _create_write_geo(file_type: str, intermediate_name: str = None, layer_name:
 # render functions
 
 
-def _render_dailies(from_node: nuke.Node, intermediate_name: str = None, cleanup_after_render: bool = False) -> None:
+def _render_dailies(from_node: nuke.Node, intermediate_name: str = None, cleanup_after_render: bool = False,
+                    dailies_gizmo: nuke.Node = None) -> None:
     crop_reformat = _create_crop_with_reformat()
     reformat = _create_node("Reformat", knobs={"type": "to box", "box_width": 2048})
     crop = _create_crop()
@@ -429,9 +458,12 @@ def _render_dailies(from_node: nuke.Node, intermediate_name: str = None, cleanup
     crop_reformat.setXYpos(x_pos, y_pos + 100 * space)
     reformat.setXYpos(x_pos, y_pos + 130 * space)
     crop.setXYpos(x_pos, y_pos + 173 * space)
-    write.setXYpos(x_pos, y_pos + 205 * space)
+    write.setXYpos(x_pos, y_pos + 305 * space)
 
-    nuke.scriptSave(NUKE_SCRIPT)  # save to crete file
+    if dailies_gizmo:
+        dailies_gizmo.setInput(0, crop)
+        dailies_gizmo.setXYpos(x_pos, y_pos + 205 * space)
+        write.setInput(0, dailies_gizmo)
 
     nuke.render(write)
 
@@ -497,12 +529,17 @@ def _render_geo(from_node: nuke.Node, intermediate_name: str, file_type: str, la
 
     write_geo.setInput(0, from_node)
 
+    os.makedirs(os.path.dirname(write_geo["file"].value()), exist_ok=True)
     nuke.render(write_geo)
 
     nuke.delete(write_geo)
 
 
 # shuffle function
+
+
+def _get_intermediate_name(name: str, index: int):
+    return name if index else None
 
 
 def _shuffle_and_render_nodes(nodes_data) -> None:
@@ -590,7 +627,7 @@ def _shuffle_and_render_nodes(nodes_data) -> None:
         x_offset += 500
 
         # get intermediate_name
-        intermediate_name = read_group["name"] if index else None
+        intermediate_name = _get_intermediate_name(read_group["name"], index)
 
         # render geo
         camera_for_3d_export = read_group["camera_for_3d_export"]
@@ -616,7 +653,7 @@ def _shuffle_and_render_nodes(nodes_data) -> None:
         if UserConfig.export_undistort_downscale:
             _render_undistort_downscale(from_node=undistort, intermediate_name=intermediate_name)
         if UserConfig.export_dailies:
-            _render_dailies(from_node=merge, intermediate_name=intermediate_name)
+            _render_dailies(from_node=merge, intermediate_name=intermediate_name, dailies_gizmo=read_group["dailies_gizmo"])
 
 
 # start
@@ -628,21 +665,29 @@ def _start():
     nuke.scriptSave(NUKE_SCRIPT)  # save to crete file
 
     read_groups = []
-    for camera_data in JSON_DATA["cameras"]:
-        read = import_file_as_read_node(camera_data["source"]["path"])
-        read["raw"].setValue(True)
+    for index, camera_data in enumerate(JSON_DATA["cameras"]):
+        read = _setup_read_node(import_file_as_read_node(camera_data["source"]["path"]))
+        version = get_version(nuke.Root().name())
+        LOGGER.info(f"Version: {version}")
+        gizmo_class, gizmo_knob_values = UserConfig.setup_dailies_gizmo(camera_data["name"], version,
+                                                                        FIRST_FRAME, LAST_FRAME)
+        dailies_gizmo = _create_node(gizmo_class, knobs=gizmo_knob_values) if gizmo_class else None
         softclip = _create_soft_clip_node(camera_data)
         grade = _create_grade_node(camera_data)
         colorspace_node = _create_node("Colorspace", knobs={"colorspace_in": "sRGB"})
         undistort = _get_undistort_from_script(camera_data["undistort_script_path"])[0]
         camera = _get_camera(camera_data)
         camera_for_3d_export = _get_camera(camera_data, read_node=read, undistort=undistort, for_3d_export=True)
-        _copy_nk_undistort_file(camera_data["undistort_script_path"])
+        _copy_nk_undistort_file(
+            camera_data["undistort_script_path"],
+            intermediate_name=_get_intermediate_name(camera_data["name"], index)
+        )
 
         read_groups.append({
             "camera": camera,
             "camera_for_3d_export": camera_for_3d_export,
             "read": read,
+            "dailies_gizmo": dailies_gizmo,
             "color_nodes": [softclip, grade, colorspace_node],
             "undistort": undistort,
             "name": camera_data["name"]

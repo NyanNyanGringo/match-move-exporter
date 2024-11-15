@@ -9,9 +9,11 @@ import platform
 import tempfile
 
 from MatchMoveExporter.lib.utilities.cmd_utilities import run_terminal_command, correct_path_to_console_path
-from MatchMoveExporter.lib.utilities.os_utilities import get_version_with_postfix
+from MatchMoveExporter.lib.utilities.log_utilities import setup_or_get_logger
 from MatchMoveExporter.userconfig import UserConfig
 
+
+LOGGER = setup_or_get_logger(force_setup=False, use_console_handler=False)
 
 MOV_EXTENSIONS = [".mov", ".mp4"]
 SEQUENCE_EXNTENSIONS = [".exr", ".dpx", ".png", ".tiff", ".psd", ".jpeg", ".jpg"]
@@ -64,31 +66,31 @@ def add_paths_to_command(command: str, paths_to_add: list, env_name: str):
 
 def execute_nuke_script(nuke_exec_path: str,
                         py_script_path: str,
-                        *args, **kwargs) -> None:
+                        nuke_script_path: str,
+                        json_for_nuke_path: str,
+                        paths_to_add_to_pythonpath: list,
+                        paths_to_add_to_nuke_path: list)-> None:
     """
     Execute Python Script through Nuke terminal mode (opens new terminal).
 
     :param nuke_exec_path: path to nuke executable.
     :param py_script_path: path to Python file to execute in Nuke.
-    :param args: any args to use in py_script. Example: nuke script path, etc.
-    :param kwargs:
-        PATHS_TO_ADD_TO_PYTHONPATH: list of additional paths which will be added to
+    :param nuke_script_path: path to Nuke script where execute Python.
+    :param json_for_nuke_path: path to .json file from 3DE4/SynthEyes.
+    :param paths_to_add_to_pythonpath: list of additional paths which will be added to
         environment. For example, so that Nuke can import certain user libraries.
-        PATHS_TO_ADD_TO_NUKE_PATH: list of additional paths which will be added to
+    :param paths_to_add_to_nuke_path: list of additional paths which will be added to
         NUKE_PATH environment. For example, if you need to add some nuke plugins.
-    :return: None
     """
     command = ""
 
     # Add paths to environment variables depending on the OS
-    if "PATHS_TO_ADD_TO_PYTHONPATH" in kwargs:
-        paths_to_add = kwargs["PATHS_TO_ADD_TO_PYTHONPATH"]
-        if isinstance(paths_to_add, list) and paths_to_add:
-            command = add_paths_to_command(command, paths_to_add, "PYTHONPATH")
-    if "PATHS_TO_ADD_TO_NUKE_PATH" in kwargs:
-        paths_to_add = kwargs["PATHS_TO_ADD_TO_NUKE_PATH"]
-        if isinstance(paths_to_add, list) and paths_to_add:
-            command = add_paths_to_command(command, paths_to_add, "NUKE_PATH")
+    command = add_paths_to_command(command, [nuke_script_path], "NUKE_SCRIPT_PATH")
+    command = add_paths_to_command(command, [json_for_nuke_path], "JSON_FOR_NUKE_PATH")
+    if paths_to_add_to_pythonpath:
+        command = add_paths_to_command(command, paths_to_add_to_pythonpath, "PYTHONPATH")
+    if paths_to_add_to_nuke_path:
+        command = add_paths_to_command(command, paths_to_add_to_nuke_path, "NUKE_PATH")
 
     # change disk where py_script located (for Windows only)
     if platform.system() == "Windows":
@@ -106,10 +108,6 @@ def execute_nuke_script(nuke_exec_path: str,
     # set py_script
     command += " " + os.path.basename(py_script_path)
 
-    # args
-    for arg in args:
-        command += " " + arg
-
     # exit terminal after execute nuke
     if not os.getenv("DEV"):
         command += " && exit"
@@ -117,12 +115,14 @@ def execute_nuke_script(nuke_exec_path: str,
     # get script directory
     cwd = os.path.dirname(py_script_path)
 
+    LOGGER.info(f"Command to execute: {command}")
+
     return run_terminal_command(command, cwd=cwd)
 
 
 def get_nuke_script_path(path: str, script_name: str) -> str:
     """
-    Generate Nuke script path according to parameters. Create folders if they don't exist.
+    Generate Nuke script path according to parameters.
 
     :param path: path to folder where will be structure (like: "/folder/script_name.nk") created.
     :param script_name: name of Nuke script.
@@ -137,8 +137,6 @@ def get_nuke_script_path(path: str, script_name: str) -> str:
         folder,
         script_name + ".nk"
     )
-
-    os.makedirs(os.path.dirname(nuke_script_path), exist_ok=True)
 
     return nuke_script_path
 

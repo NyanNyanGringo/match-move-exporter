@@ -10,6 +10,8 @@
 
 ---
 
+# TODO: написать что не поддерживается Frame Range
+
 ### Экспорт трекинг-даты из 3DEqualizer по одной кнопке
 
 ![3DE4_rXrdtNS6ux.png](resources%2F3DE4_rXrdtNS6ux.png)
