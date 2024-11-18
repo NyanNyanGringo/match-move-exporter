@@ -102,6 +102,7 @@ class UserConfig:
             "file_type": "exr",
             "compression": "DWAA"
         }
+
         return knob_values
 
     @staticmethod
@@ -140,14 +141,14 @@ class UserConfig:
 
 
     @staticmethod
-    def setup_dailies_gizmo(name: str, version: int, first: int, last: int) -> tuple:
+    def setup_dailies_gizmo(name: str, version: int, project: str = None, username: str = None) -> tuple:
         """
         Turn on/off usage of dailies gizmo. Also, setup build in gizmo or use your own - change
         class of gizmo and knob_values. You get next arguments to set up gizmo:
         :param name: name entered by user.
         :param version: version from name.
-        :param first: first frame.
-        :param last: last frame.
+        :param project: name of project from GUI, only if config exists.
+        :param username: name of user from GUI, only if config exists.
         :return: tuple[None, None] if you don't want to use gizmo, or tuple with gizmo class name and knob values.
         """
         use_dailies_gizmo = True  # set False if you don't want to use any gizmo
@@ -156,10 +157,14 @@ class UserConfig:
 
         class_ = "mmexporter_dailies_gizmo"
         knob_values = {
-            "project": " ",
-            "artist": " ",
             "shot": name,
             "version": version,
+            "project": project if project else " ",
+            "artist": username if username else " "
         }
 
         return class_, knob_values
+
+    @staticmethod
+    def get_config_filepath() -> str:
+        return os.path.join(get_root_path(), "config", "config.json")

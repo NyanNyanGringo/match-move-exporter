@@ -9,7 +9,6 @@ import nuke
 
 import os
 import shutil
-import sys
 import json
 from random import random
 
@@ -20,6 +19,8 @@ from MatchMoveExporter.lib.utilities.nuke_utilities import import_file_as_read_n
 from MatchMoveExporter.lib.utilities.userconfig_utilities import CameraConfig
 from MatchMoveExporter.lib.utilities.name_convention_utilities import get_name_from_filepath, insert_layer, get_version
 from MatchMoveExporter.userconfig import UserConfig
+from MatchMoveExporter.lib.utilities import config_utilities
+from MatchMoveExporter.lib.utilities.config_utilities import ConfigKeys
 
 
 # setup logger from lib
@@ -407,7 +408,7 @@ def _create_write_undistort_downscale(intermediate_name: str = None) -> nuke.Nod
     write["last"].setValue(LAST_FRAME)
     write["use_limit"].setValue(True)
 
-    for knob_name, value in UserConfig.get_undistort_configuration().items():
+    for knob_name, value in UserConfig.get_undistort_downscale_configuration()[0].items():
         write[knob_name].setValue(value)
 
         if knob_name == "file_type":
@@ -669,10 +670,16 @@ def _start():
         read = _setup_read_node(import_file_as_read_node(camera_data["source"]["path"]))
         version = get_version(nuke.Root().name())
         LOGGER.info(f"Version: {version}")
+        project = None
+        if config_utilities.check_key(ConfigKeys.PROJECT):
+            project = config_utilities.read_config_key(ConfigKeys.PROJECT)
+        username = None
+        if config_utilities.check_key(ConfigKeys.USERNAME):
+            username = config_utilities.read_config_key(ConfigKeys.USERNAME)
         gizmo_class, gizmo_knob_values = UserConfig.setup_dailies_gizmo(get_name_from_filepath(nuke.Root().name()),
                                                                         version,
-                                                                        FIRST_FRAME,
-                                                                        LAST_FRAME)
+                                                                        project,
+                                                                        username)
         dailies_gizmo = _create_node(gizmo_class, knobs=gizmo_knob_values) if gizmo_class else None
         softclip = _create_soft_clip_node(camera_data)
         grade = _create_grade_node(camera_data)

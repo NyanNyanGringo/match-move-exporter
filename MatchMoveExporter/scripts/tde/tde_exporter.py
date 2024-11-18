@@ -21,6 +21,9 @@ from MatchMoveExporter.lib.utilities.os_utilities import get_root_path, get_temp
 from MatchMoveExporter.lib.utilities.nuke_utilities import get_export_pyscript, execute_nuke_script, get_nuke_script_path
 from MatchMoveExporter.lib.utilities.log_utilities import setup_or_get_logger
 from MatchMoveExporter.lib.utilities.export_nuke_LD_3DE4_Lens_Distortion_Node import exportNukeDewarpNode
+from MatchMoveExporter.lib.utilities import config_utilities
+from MatchMoveExporter.lib.utilities.config_utilities import ConfigKeys
+
 from MatchMoveExporter.userconfig import UserConfig
 
 
@@ -110,12 +113,17 @@ def button_clicked_callback(requester, widget, action) -> None:
 def label_changed_callback(requester, widget, action) -> None:
     LOGGER.info(f"New callback from widget {widget} received, action: {action}")
 
+def project_changed_callback(requester, widget, action) -> None:
+    LOGGER.info(f"New callback from widget {widget} received, action: {action}")
+    save_config()
+
+def username_changed_callback(requester, widget, action) -> None:
+    LOGGER.info(f"New callback from widget {widget} received, action: {action}")
+    save_config()
 
 def _MatchMoveExporterUpdate(requester) -> None:
     LOGGER.info("New update callback received, put your code here...")
-
-    tde4.setWidgetValue(requester, "textfield_name", UserConfig.get_default_name())
-    tde4.setWidgetLabel(requester, "label_pattern", UserConfig.get_name_pattern())
+    load_config()
 
 
 # 3DE4 FUNCTIONS
@@ -593,6 +601,34 @@ def validName(name):
     return name
 
 
+# CONFIG
+
+
+def save_config():
+    config_utilities.write_config(
+        ConfigKeys.PROJECT, tde4.getWidgetValue(requester, "textfield_project")
+    )
+
+    config_utilities.write_config(
+        ConfigKeys.USERNAME, tde4.getWidgetValue(requester, "textfield_username")
+    )
+
+def load_config():
+    config_utilities.setup_config()
+
+    tde4.setWidgetValue(requester, "textfield_name", UserConfig.get_default_name())
+
+    tde4.setWidgetLabel(requester, "label_pattern", UserConfig.get_name_pattern())
+
+    if config_utilities.check_key(ConfigKeys.PROJECT):
+        value = config_utilities.read_config_key(ConfigKeys.PROJECT)
+        tde4.setWidgetValue(requester, "textfield_project", value)
+
+    if config_utilities.check_key(ConfigKeys.USERNAME):
+        value = config_utilities.read_config_key(ConfigKeys.USERNAME)
+        tde4.setWidgetValue(requester, "textfield_username", value)
+
+
 #
 # DO NOT ADD ANY CUSTOM CODE BEYOND THIS POINT!
 #
@@ -615,9 +651,28 @@ except (ValueError,NameError,TypeError):
     tde4.setWidgetOffsets(requester,"label_pattern",60,60,15,0)
     tde4.setWidgetAttachModes(requester,"label_pattern","ATTACH_WINDOW","ATTACH_WINDOW","ATTACH_WIDGET","ATTACH_NONE")
     tde4.setWidgetSize(requester,"label_pattern",200,20)
-    tde4.setWidgetLinks(requester,"button_export","","","label_pattern","")
-    tde4.setWidgetLinks(requester,"textfield_name","","","","")
-    tde4.setWidgetLinks(requester,"label_pattern","","","textfield_name","")
+    tde4.addTextFieldWidget(requester,"textfield_username","username","")
+    tde4.setWidgetOffsets(requester,"textfield_username",140,60,60,0)
+    tde4.setWidgetAttachModes(requester,"textfield_username","ATTACH_WINDOW","ATTACH_WINDOW","ATTACH_WIDGET","ATTACH_NONE")
+    tde4.setWidgetSize(requester,"textfield_username",200,20)
+    tde4.setWidgetCallbackFunction(requester,"textfield_username","username_changed_callback")
+    tde4.setWidgetBGColor(requester,"textfield_username",0.180000,0.180000,0.180000)
+    tde4.addSeparatorWidget(requester,"separator")
+    tde4.setWidgetOffsets(requester,"separator",60,60,30,0)
+    tde4.setWidgetAttachModes(requester,"separator","ATTACH_WINDOW","ATTACH_WINDOW","ATTACH_WIDGET","ATTACH_NONE")
+    tde4.setWidgetSize(requester,"separator",200,20)
+    tde4.addTextFieldWidget(requester,"textfield_project","project","")
+    tde4.setWidgetOffsets(requester,"textfield_project",140,60,30,0)
+    tde4.setWidgetAttachModes(requester,"textfield_project","ATTACH_WINDOW","ATTACH_WINDOW","ATTACH_WIDGET","ATTACH_NONE")
+    tde4.setWidgetSize(requester,"textfield_project",200,20)
+    tde4.setWidgetCallbackFunction(requester,"textfield_project","project_changed_callback")
+    tde4.setWidgetBGColor(requester,"textfield_project",0.180000,0.180000,0.180000)
+    tde4.setWidgetLinks(requester,"button_export","textfield_project","textfield_project","label_pattern","textfield_project")
+    tde4.setWidgetLinks(requester,"textfield_name","textfield_project","textfield_project","textfield_project","textfield_project")
+    tde4.setWidgetLinks(requester,"label_pattern","textfield_project","textfield_project","textfield_name","textfield_project")
+    tde4.setWidgetLinks(requester,"textfield_username","textfield_project","textfield_project","separator","textfield_project")
+    tde4.setWidgetLinks(requester,"separator","textfield_project","textfield_project","button_export","textfield_project")
+    tde4.setWidgetLinks(requester,"textfield_project","textfield_project","textfield_project","separator","textfield_project")
     _MatchMoveExporter_requester = requester
 
 #
