@@ -24,6 +24,8 @@
 │   └── sh000_00_track_v001.####.exr | "Exr Zip Raw"
 ├── undistort
 │   └── sh000_00_track_v001.####.exr | "Exr Dwaa Raw"
+├── undistort_downscale
+│   └── sh000_00_track_v001.####.exr | "Exr Dwaa Raw"
 ├── sh000_00_track_v001.3de
 ├── sh000_00_track_v001.abc | "Camera + Geo"
 ├── sh000_00_track_v001.fbx | "Camera + Geo"
@@ -31,8 +33,6 @@
 └── sh000_00_track_v001.nk
 
 Опционально (можно включить в userconfig.py):
-├── undistort_downscale
-│   └── sh000_00_track_v001.####.exr | "Exr Dwaa Raw"
 ├── Раздельный экспорт Camera и Geo для .abc и .fbx
 ├── sh000_00_track_undistort_v001.nk | Только Undistort нода
 └── sh000_00_track_v001.mel

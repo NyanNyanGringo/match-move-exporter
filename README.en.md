@@ -22,6 +22,8 @@ File structure after export. A folder with all files is created next to the 3DEq
 │   └── sh000_00_track_v001.####.exr | "Exr Zip Raw"
 ├── undistort
 │   └── sh000_00_track_v001.####.exr | "Exr Dwaa Raw"
+├── undistort_downscale
+│   └── sh000_00_track_v001.####.exr | "Exr Dwaa Raw"
 ├── sh000_00_track_v001.3de
 ├── sh000_00_track_v001.abc | "Camera + Geo"
 ├── sh000_00_track_v001.fbx | "Camera + Geo"
@@ -29,8 +31,6 @@ File structure after export. A folder with all files is created next to the 3DEq
 └── sh000_00_track_v001.nk
 
 Optionally (can be included in userconfig.py):
-├── undistort_downscale
-│   └── sh000_00_track_v001.####.exr | "Exr Dwaa Raw"
 ├── Separate export of Camera and Geo for .abc and .fbx
 ├── sh000_00_track_undistort_v001.nk | Only Undistort node
 └── sh000_00_track_v001.mel
