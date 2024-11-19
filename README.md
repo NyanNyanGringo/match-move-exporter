@@ -22,11 +22,18 @@
 │   └── sh000_00_track_v001.####.exr | "Exr Zip Raw"
 ├── undistort
 │   └── sh000_00_track_v001.####.exr | "Exr Dwaa Raw"
+├── undistort_downscale
+│   └── sh000_00_track_v001.####.exr | "Exr Dwaa Raw"
 ├── sh000_00_track_v001.3de
 ├── sh000_00_track_v001.abc | "Camera + Geo"
 ├── sh000_00_track_v001.fbx | "Camera + Geo"
 ├── sh000_00_track_v001.mov | "Mov H264 Srgb"
 └── sh000_00_track_v001.nk
+
+Опционально (можно включить в userconfig.py):
+├── Раздельный экспорт Camera и Geo для .abc и .fbx
+├── sh000_00_track_undistort_v001.nk | Только Undistort нода
+└── sh000_00_track_v001.mel
 ```
 
 ---
@@ -61,28 +68,12 @@ os.environ["PYTHON_CUSTOM_SCRIPTS_3DE4"] = root_path + os.path.pathsep + scripts
 # Run 3DEqualizer.
 subprocess.run(["/path/to/3DE4.exe"])
 ```
-Необязательные переменные среды. Оставьте пустыми или не добавляйте в код, чтобы игнорировать их:
-```python
-# By default name is "sh000_00_track_v001".
-os.environ["MMEXPORTER_CUSTOM_DEFAULT_NAME"] = ""
+Для настройки программы под студию используйте файл `userconfig.py`
 
-# By default pattern is "[seq_name]_sh<shot_number>_<task_number>_track_v000_[definition]".
-os.environ["MMEXPORTER_CUSTOM_NAME_PATTERN"] = ""
-
-# Path to custom log path. Default is "/match-move-exporter/logs/log.log".
-os.environ["MMEXPORTER_CUSTOM_LOG_PATH"] = ""
-
-# Assign value "1", if lens distortion plugins already installed to Nuke.
-# Otherwise, path will be "/plugins/3de4_lens_distortion_plugin_kit"
-os.environ["MMEXPORTER_NUKE_LENS_PLUGINS_INSTALLED"] = ""
-
-# Assign value "1", to name export folder as version + postfix.
-# Otherwise, it will has full name.
-os.environ["MMEXPORTER_EXPORT_FOLDER_IS_VERSION"] = ""
-```
 Вы можете удалить папки `launcher` и `resources`. 
 
-Вы можете удалить папку `plugins`, если используете `MMEXPORTER_NUKE_LENS_PLUGINS_INSTALLED` и [линзы](https://www.3dequalizer.com/?site=tech_docs&id=110216_01) уже установлены в Nuke.
+Вы можете удалить папку `plugins`, если [линзы](https://www.3dequalizer.com/?site=tech_docs&id=110216_01) уже
+установлены в Nuke или вы изменили к ним путь в методе get_3de4_lenses_for_nuke_path()
 
 ---
 

@@ -3,3 +3,4 @@ test_files
 logs
 external_code
 saves
+/config/

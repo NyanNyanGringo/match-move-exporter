@@ -1,0 +1,469 @@
+Group {
+ name MMExporter_DailiesGizmo
+ addUserKnob {20 User}
+ addUserKnob {1 project l Project:}
+ addUserKnob {1 artist l Artist:}
+ addUserKnob {26 _1 l " "}
+ addUserKnob {1 shot l Shot:}
+ addUserKnob {3 version l Version: -STARTLINE}
+ addUserKnob {43 comments l Comments:}
+ addUserKnob {20 settings l Settings}
+ addUserKnob {7 box_opacity l "Box Opacity:"}
+ box_opacity 1
+ addUserKnob {7 text_opacity l "Text Opacity:"}
+ addUserKnob {26 ""}
+ addUserKnob {1 pattern_to_delete l "Pattern to Delete:"}
+ pattern_to_delete _comp|_clnp
+ addUserKnob {2 font l Font:}
+ font "\[python nuke.defaultFontPathname()]"
+}
+ BackdropNode {
+  inputs 0
+  name BackdropNode1
+  knobChanged "try:\n    node=nuke.thisNode()\n    knob=nuke.thisKnob()\n    name=knob.name()\n\n    def updateKnobs():\n        nodeWidth=node\['bdwidth'].getValue()\n        nodeHeight=node\['bdheight'].getValue()\n        node\['sizeNode'].setValue(\[int(nodeWidth),int(nodeHeight)])\n        node\['node_position_x'].setValue(int(node\['xpos'].value()))\n        node\['node_position_y'].setValue(int(node\['ypos'].value()))\n        node\['zorder'].setValue(int(node\['z_order'].getValue()))\n        node\['font_size'].setValue(int(node\['note_font_size'].getValue()))\n        node\['oz_appearance'].setValue( node\['appearance'].value() )\n        node\['oz_border_width'].setValue( node\['border_width'].value() )\n        #node\['fontColor'].setValue(int(node\['note_font_color'].getValue()))\n\n    def updateLabelKnob():\n        curLabel = node\['label'].getValue()\n        if '<p align=center>' in curLabel:\n            node\['text'].setValue(curLabel.replace('<p align=center>', ''))\n            node\['alignment'].setValue(1)\n        elif '<p align=right>' in curLabel:\n            node\['text'].setValue(curLabel.replace('<p align=right>', ''))\n            node\['alignment'].setValue(2)\n        elif '<center>' in curLabel:\n            node\['text'].setValue(curLabel.replace('<center>', ''))\n            node\['alignment'].setValue(1)\n        else:\n            node\['text'].setValue(curLabel)\n            node\['alignment'].setValue(0)\n\n    ### OPENING SETUP\n    if name=='showPanel':\n        updateKnobs()\n        updateLabelKnob()\n\n    ### UPDATE STYLE\n    if name in \['oz_appearance', 'oz_border_width']:\n        node\['appearance'].setValue( node\['oz_appearance'].value() )\n        node\['border_width'].setValue( node\['oz_border_width'].value() )\n\n    ### CHANGE THE SIZE OF THE NODE\n    if name=='sizeNode':\n        node\['bdwidth'].setValue(int(node\['sizeNode'].getValue()\[0]))\n        node\['bdheight'].setValue(int(node\['sizeNode'].getValue()\[1]))\n\n    ### POSITION\n    if name=='node_position_x' or name=='node_position_y':\n        node.setXYpos(int(node\['node_position_x'].getValue()),int(node\['node_position_y'].getValue()))\n\n    ### ZORDER\n    if name=='zorder':\n        node\['z_order'].setValue(node\['zorder'].getValue())\n\n    ### UPDATE THE 'CURRENT SIZE' AND ORDER\n    #if name=='bdwidth' or name=='bdheight' or name=='z_order':\n    if name in \['bdwidth', 'bdheight', 'z_order']:\n        updateKnobs()\n\n    ### UPDATE LABEL\n    title = node\['name'].value()\n    text = node\['text'].value()\n\n    if name in \['text', 'alignment', 'title']:\n        if text=='':\n            if node\['alignment'].getValue()==1:\n                newLabel='<p align=center>'#+title\n            elif node\['alignment'].getValue()==2:\n                newLabel='<p align=right>'#+title\n            else:\n                newLabel=title\n        else:\n            if node\['alignment'].getValue()==1:\n                newLabel='<p align=center>'+text\n            elif node\['alignment'].getValue()==2:\n                newLabel='<p align=right>'+text\n            else:\n                newLabel=text\n\n        node\['label'].setValue(newLabel)\n\n    if name==\"font_size\":\n        new_font_size = node\[\"font_size\"].value()\n        node\['note_font_size'].setValue(new_font_size)\n\n    del newLabel\n\nexcept:\n    pass\n"
+  tile_color 0x919599ff
+  label procedures
+  note_font_size 50
+  xpos -991
+  ypos -1500
+  bdwidth 726
+  bdheight 424
+  addUserKnob {20 Settings}
+  addUserKnob {43 text l Text}
+  text procedures
+  addUserKnob {7 font_size l "Font Size" R 10 100}
+  font_size 50
+  addUserKnob {4 alignment l "" -STARTLINE M {left center right}}
+  addUserKnob {26 divider1 l "" +STARTLINE}
+  addUserKnob {22 "Random Color" l " <img src=\"ColorBars.png\">" t "Generates a random color for the Backdrop (dark shades)" -STARTLINE T "import random\nn=nuke.thisNode()\nr,g,b=\[(float(random.randint( 20, 40)))/100,(float(random.randint( 10, 50)))/100,(float(random.randint( 15, 60)))/100]\nn\['tile_color'].setValue( int('%02x%02x%02x%02x' % (int(r*255),int(g*255),int(b*255),1),16) )\n"}
+  addUserKnob {22 Red l "<div style=\"background-color: #661717; color: #661717; font-size: 7px;\">______</div><div style=\"background-color: #992323; color: #992323; font-size: 7px;\">______</div><div style=\"background-color: #cc2e2e; color: #cc2e2e; font-size: 7px;\">______</div>" t "Quickly apply between 3 shades of red to the Backdrop" -STARTLINE T "import colorsys\nn=nuke.thisNode()\ndef clamp(x):\n    return int(max(0, min(x, 255)))\ntile_color=n\['tile_color'].value()\ncolors=\[\[0.0, 0.77, 0.4], \[0.0, 0.77, 0.6], \[0.0, 0.77, 0.8]]\n#converting colors\ncolors_hex=\[colorsys.hsv_to_rgb(color\[0],color\[1],color\[2]) for color in colors]\ncolors_int=\[int('%02x%02x%02x%02x' % (clamp(color\[0]*255),clamp(color\[1]*255),clamp(color\[2]*255),255), 16) for color in colors_hex]\n#selecting color logic\nif tile_color in colors_int:\n    current_index=colors_int.index(tile_color)\n    if current_index >= (len(colors_int)-1):\n        new_color = colors_int\[0]\n    else:\n        new_color = colors_int\[current_index+1]\nelse:\n    new_color = colors_int\[0]\n#apply color\nn\['tile_color'].setValue(new_color)"}
+  addUserKnob {22 Orange l "<div style=\"background-color: #664514; color: #664514; font-size: 7px;\">______</div><div style=\"background-color: #99681e; color: #99681e; font-size: 7px;\">______</div><div style=\"background-color: #cc8a28; color: #cc8a28; font-size: 7px;\">______</div>" t "Quickly apply between 3 shades of orange to the Backdrop" -STARTLINE T "import colorsys\nn=nuke.thisNode()\ndef clamp(x):\n    return int(max(0, min(x, 255)))\ntile_color=n\['tile_color'].value()\ncolors=\[\[0.1, 0.8, 0.4], \[0.1, 0.8, 0.6], \[0.1, 0.8, 0.8]]\n#converting colors\ncolors_hex=\[colorsys.hsv_to_rgb(color\[0],color\[1],color\[2]) for color in colors]\ncolors_int=\[int('%02x%02x%02x%02x' % (clamp(color\[0]*255),clamp(color\[1]*255),clamp(color\[2]*255),255), 16) for color in colors_hex]\n#selecting color logic\nif tile_color in colors_int:\n    current_index=colors_int.index(tile_color)\n    if current_index >= (len(colors_int)-1):\n        new_color = colors_int\[0]\n    else:\n        new_color = colors_int\[current_index+1]\nelse:\n    new_color = colors_int\[0]\n#apply color\nn\['tile_color'].setValue(new_color)"}
+  addUserKnob {22 Yellow l "<div style=\"background-color: #666214; color: #666214; font-size: 7px;\">______</div><div style=\"background-color: #99941e; color: #99941e; font-size: 7px;\">______</div><div style=\"background-color: #ccc528; color: #ccc528; font-size: 7px;\">______</div>" t "Quickly apply between 3 shades of yellow to the Backdrop" -STARTLINE T "import colorsys\nn=nuke.thisNode()\ndef clamp(x):\n    return int(max(0, min(x, 255)))\ntile_color=n\['tile_color'].value()\ncolors=\[\[0.16, 0.8, 0.4], \[0.16, 0.8, 0.6], \[0.16, 0.8, 0.8]]\n#converting colors\ncolors_hex=\[colorsys.hsv_to_rgb(color\[0],color\[1],color\[2]) for color in colors]\ncolors_int=\[int('%02x%02x%02x%02x' % (clamp(color\[0]*255),clamp(color\[1]*255),clamp(color\[2]*255),255), 16) for color in colors_hex]\n#selecting color logic\nif tile_color in colors_int:\n    current_index=colors_int.index(tile_color)\n    if current_index >= (len(colors_int)-1):\n        new_color = colors_int\[0]\n    else:\n        new_color = colors_int\[current_index+1]\nelse:\n    new_color = colors_int\[0]\n#apply color\nn\['tile_color'].setValue(new_color)"}
+  addUserKnob {22 Green l "<div style=\"background-color: #104c0f; color: #104c0f; font-size: 7px;\">______</div><div style=\"background-color: #1b7f19; color: #1b7f19; font-size: 7px;\">______</div><div style=\"background-color: #26b223; color: #26b223; font-size: 7px;\">______</div>" t "Quickly apply between 3 shades of green to the Backdrop" -STARTLINE T "import colorsys\nn=nuke.thisNode()\ndef clamp(x):\n    return int(max(0, min(x, 255)))\ntile_color=n\['tile_color'].value()\ncolors=\[\[0.33, 0.8, 0.3], \[0.33, 0.8, 0.5], \[0.33, 0.8, 0.7]]\n#converting colors\ncolors_hex=\[colorsys.hsv_to_rgb(color\[0],color\[1],color\[2]) for color in colors]\ncolors_int=\[int('%02x%02x%02x%02x' % (clamp(color\[0]*255),clamp(color\[1]*255),clamp(color\[2]*255),255), 16) for color in colors_hex]\n#selecting color logic\nif tile_color in colors_int:\n    current_index=colors_int.index(tile_color)\n    if current_index >= (len(colors_int)-1):\n        new_color = colors_int\[0]\n    else:\n        new_color = colors_int\[current_index+1]\nelse:\n    new_color = colors_int\[0]\n#apply color\nn\['tile_color'].setValue(new_color)"}
+  addUserKnob {22 Cyan l "<div style=\"background-color: #0f4c3d; color: #0f4c3d; font-size: 7px;\">______</div><div style=\"background-color: #197f67; color: #197f67; font-size: 7px;\">______</div><div style=\"background-color: #23b290; color: #23b290; font-size: 7px;\">______</div>" t "Quickly apply between 3 shades of cyan to the Backdrop" -STARTLINE T "import colorsys\nn=nuke.thisNode()\ndef clamp(x):\n    return int(max(0, min(x, 255)))\ntile_color=n\['tile_color'].value()\ncolors=\[\[0.46, 0.8, 0.3], \[0.46, 0.8, 0.5], \[0.46, 0.8, 0.7]]\n#converting colors\ncolors_hex=\[colorsys.hsv_to_rgb(color\[0],color\[1],color\[2]) for color in colors]\ncolors_int=\[int('%02x%02x%02x%02x' % (clamp(color\[0]*255),clamp(color\[1]*255),clamp(color\[2]*255),255), 16) for color in colors_hex]\n#selecting color logic\nif tile_color in colors_int:\n    current_index=colors_int.index(tile_color)\n    if current_index >= (len(colors_int)-1):\n        new_color = colors_int\[0]\n    else:\n        new_color = colors_int\[current_index+1]\nelse:\n    new_color = colors_int\[0]\n#apply color\nn\['tile_color'].setValue(new_color)"}
+  addUserKnob {22 Blue l "<div style=\"background-color: #1b355b; color: #1b355b; font-size: 7px;\">______</div><div style=\"background-color: #2a528e; color: #2a528e; font-size: 7px;\">______</div><div style=\"background-color: #3a70c1; color: #3a70c1; font-size: 7px;\">______</div>" t "Quickly apply between 3 shades of blue to the Backdrop" -STARTLINE T "import colorsys\nn=nuke.thisNode()\ndef clamp(x):\n    return int(max(0, min(x, 255)))\ntile_color=n\['tile_color'].value()\ncolors=\[\[0.6, 0.7, 0.36], \[0.6, 0.7, 0.56], \[0.6, 0.7, 0.76]]\n#converting colors\ncolors_hex=\[colorsys.hsv_to_rgb(color\[0],color\[1],color\[2]) for color in colors]\ncolors_int=\[int('%02x%02x%02x%02x' % (clamp(color\[0]*255),clamp(color\[1]*255),clamp(color\[2]*255),255), 16) for color in colors_hex]\n#selecting color logic\nif tile_color in colors_int:\n    current_index=colors_int.index(tile_color)\n    if current_index >= (len(colors_int)-1):\n        new_color = colors_int\[0]\n    else:\n        new_color = colors_int\[current_index+1]\nelse:\n    new_color = colors_int\[0]\n#apply color\nn\['tile_color'].setValue(new_color)"}
+  addUserKnob {22 Dark_blue l "<div style=\"background-color: #0e0d33; color: #0e0d33; font-size: 7px;\">______</div><div style=\"background-color: #1c1a66; color: #1c1a66; font-size: 7px;\">______</div><div style=\"background-color: #2a2799; color: #2a2799; font-size: 7px;\">______</div>" t "Quickly apply between 3 shades of dark_blue to the Backdrop" -STARTLINE T "import colorsys\nn=nuke.thisNode()\ndef clamp(x):\n    return int(max(0, min(x, 255)))\ntile_color=n\['tile_color'].value()\ncolors=\[\[0.67, 0.74, 0.2], \[0.67, 0.74, 0.4], \[0.67, 0.74, 0.6]]\n#converting colors\ncolors_hex=\[colorsys.hsv_to_rgb(color\[0],color\[1],color\[2]) for color in colors]\ncolors_int=\[int('%02x%02x%02x%02x' % (clamp(color\[0]*255),clamp(color\[1]*255),clamp(color\[2]*255),255), 16) for color in colors_hex]\n#selecting color logic\nif tile_color in colors_int:\n    current_index=colors_int.index(tile_color)\n    if current_index >= (len(colors_int)-1):\n        new_color = colors_int\[0]\n    else:\n        new_color = colors_int\[current_index+1]\nelse:\n    new_color = colors_int\[0]\n#apply color\nn\['tile_color'].setValue(new_color)"}
+  addUserKnob {22 Magenta l "<div style=\"background-color: #36103f; color: #36103f; font-size: 7px;\">______</div><div style=\"background-color: #611d72; color: #611d72; font-size: 7px;\">______</div><div style=\"background-color: #8d2ba5; color: #8d2ba5; font-size: 7px;\">______</div>" t "Quickly apply between 3 shades of magenta to the Backdrop" -STARTLINE T "import colorsys\nn=nuke.thisNode()\ndef clamp(x):\n    return int(max(0, min(x, 255)))\ntile_color=n\['tile_color'].value()\ncolors=\[\[0.8, 0.74, 0.25], \[0.8, 0.74, 0.45], \[0.8, 0.74, 0.65]]\n#converting colors\ncolors_hex=\[colorsys.hsv_to_rgb(color\[0],color\[1],color\[2]) for color in colors]\ncolors_int=\[int('%02x%02x%02x%02x' % (clamp(color\[0]*255),clamp(color\[1]*255),clamp(color\[2]*255),255), 16) for color in colors_hex]\n#selecting color logic\nif tile_color in colors_int:\n    current_index=colors_int.index(tile_color)\n    if current_index >= (len(colors_int)-1):\n        new_color = colors_int\[0]\n    else:\n        new_color = colors_int\[current_index+1]\nelse:\n    new_color = colors_int\[0]\n#apply color\nn\['tile_color'].setValue(new_color)"}
+  addUserKnob {22 Pink l "<div style=\"background-color: #661a3e; color: #661a3e; font-size: 7px;\">______</div><div style=\"background-color: #99275e; color: #99275e; font-size: 7px;\">______</div><div style=\"background-color: #cc357d; color: #cc357d; font-size: 7px;\">______</div>" t "Quickly apply between 3 shades of pink to the Backdrop" -STARTLINE T "import colorsys\nn=nuke.thisNode()\ndef clamp(x):\n    return int(max(0, min(x, 255)))\ntile_color=n\['tile_color'].value()\ncolors=\[\[0.92, 0.74, 0.4], \[0.92, 0.74, 0.6], \[0.92, 0.74, 0.8]]\n#converting colors\ncolors_hex=\[colorsys.hsv_to_rgb(color\[0],color\[1],color\[2]) for color in colors]\ncolors_int=\[int('%02x%02x%02x%02x' % (clamp(color\[0]*255),clamp(color\[1]*255),clamp(color\[2]*255),255), 16) for color in colors_hex]\n#selecting color logic\nif tile_color in colors_int:\n    current_index=colors_int.index(tile_color)\n    if current_index >= (len(colors_int)-1):\n        new_color = colors_int\[0]\n    else:\n        new_color = colors_int\[current_index+1]\nelse:\n    new_color = colors_int\[0]\n#apply color\nn\['tile_color'].setValue(new_color)"}
+  addUserKnob {22 Cam l "<div style=\"background-color: #80cccc; color: #80cccc; font-size: 7px;\">______</div><div style=\"background-color: #80cccc; color: #80cccc; font-size: 7px;\">______</div><div style=\"background-color: #80cccc; color: #80cccc; font-size: 7px;\">______</div><div>Cam</div>" t "Quickly apply a Backdrop for Cam" T "import colorsys\nn=nuke.thisNode()\ndef clamp(x):\n    return int(max(0, min(x, 255)))\ntile_color=n\['tile_color'].value()\ncolors=\[\[0.5, 0.37, 0.8], \[0.5, 0.37, 0.8], \[0.5, 0.37, 0.8]]\n#converting colors\ncolors_hex=\[colorsys.hsv_to_rgb(color\[0],color\[1],color\[2]) for color in colors]\ncolors_int=\[int('%02x%02x%02x%02x' % (clamp(color\[0]*255),clamp(color\[1]*255),clamp(color\[2]*255),255), 16) for color in colors_hex]\n#selecting color logic\nif tile_color in colors_int:\n    current_index=colors_int.index(tile_color)\n    if current_index >= (len(colors_int)-1):\n        new_color = colors_int\[0]\n    else:\n        new_color = colors_int\[current_index+1]\nelse:\n    new_color = colors_int\[0]\n#apply color\nn\['tile_color'].setValue(new_color)" +STARTLINE}
+  addUserKnob {22 Elements l "<div style=\"background-color: #a87f7f; color: #a87f7f; font-size: 7px;\">______</div><div style=\"background-color: #a87f7f; color: #a87f7f; font-size: 7px;\">______</div><div style=\"background-color: #a87f7f; color: #a87f7f; font-size: 7px;\">______</div><div>Elements</div>" t "Quickly apply a Backdrop for Elements" -STARTLINE T "import colorsys\nn=nuke.thisNode()\ndef clamp(x):\n    return int(max(0, min(x, 255)))\ntile_color=n\['tile_color'].value()\ncolors=\[\[0.0, 0.24, 0.66], \[0.0, 0.24, 0.66], \[0.0, 0.24, 0.66]]\n#converting colors\ncolors_hex=\[colorsys.hsv_to_rgb(color\[0],color\[1],color\[2]) for color in colors]\ncolors_int=\[int('%02x%02x%02x%02x' % (clamp(color\[0]*255),clamp(color\[1]*255),clamp(color\[2]*255),255), 16) for color in colors_hex]\n#selecting color logic\nif tile_color in colors_int:\n    current_index=colors_int.index(tile_color)\n    if current_index >= (len(colors_int)-1):\n        new_color = colors_int\[0]\n    else:\n        new_color = colors_int\[current_index+1]\nelse:\n    new_color = colors_int\[0]\n#apply color\nn\['tile_color'].setValue(new_color)"}
+  addUserKnob {22 Cleanup l "<div style=\"background-color: #cc375a; color: #cc375a; font-size: 7px;\">______</div><div style=\"background-color: #cc375a; color: #cc375a; font-size: 7px;\">______</div><div style=\"background-color: #cc375a; color: #cc375a; font-size: 7px;\">______</div><div>Cleanup</div>" t "Quickly apply a Backdrop for Cleanup" -STARTLINE T "import colorsys\nn=nuke.thisNode()\ndef clamp(x):\n    return int(max(0, min(x, 255)))\ntile_color=n\['tile_color'].value()\ncolors=\[\[0.96, 0.73, 0.8], \[0.96, 0.73, 0.8], \[0.96, 0.73, 0.8]]\n#converting colors\ncolors_hex=\[colorsys.hsv_to_rgb(color\[0],color\[1],color\[2]) for color in colors]\ncolors_int=\[int('%02x%02x%02x%02x' % (clamp(color\[0]*255),clamp(color\[1]*255),clamp(color\[2]*255),255), 16) for color in colors_hex]\n#selecting color logic\nif tile_color in colors_int:\n    current_index=colors_int.index(tile_color)\n    if current_index >= (len(colors_int)-1):\n        new_color = colors_int\[0]\n    else:\n        new_color = colors_int\[current_index+1]\nelse:\n    new_color = colors_int\[0]\n#apply color\nn\['tile_color'].setValue(new_color)"}
+  addUserKnob {22 Key l "<div style=\"background-color: #4d417f; color: #4d417f; font-size: 7px;\">______</div><div style=\"background-color: #4d417f; color: #4d417f; font-size: 7px;\">______</div><div style=\"background-color: #4d417f; color: #4d417f; font-size: 7px;\">______</div><div>Key</div>" t "Quickly apply a Backdrop for Key" -STARTLINE T "import colorsys\nn=nuke.thisNode()\ndef clamp(x):\n    return int(max(0, min(x, 255)))\ntile_color=n\['tile_color'].value()\ncolors=\[\[0.7, 0.49, 0.5], \[0.7, 0.49, 0.5], \[0.7, 0.49, 0.5]]\n#converting colors\ncolors_hex=\[colorsys.hsv_to_rgb(color\[0],color\[1],color\[2]) for color in colors]\ncolors_int=\[int('%02x%02x%02x%02x' % (clamp(color\[0]*255),clamp(color\[1]*255),clamp(color\[2]*255),255), 16) for color in colors_hex]\n#selecting color logic\nif tile_color in colors_int:\n    current_index=colors_int.index(tile_color)\n    if current_index >= (len(colors_int)-1):\n        new_color = colors_int\[0]\n    else:\n        new_color = colors_int\[current_index+1]\nelse:\n    new_color = colors_int\[0]\n#apply color\nn\['tile_color'].setValue(new_color)"}
+  addUserKnob {22 Ref l "<div style=\"background-color: #273c56; color: #273c56; font-size: 7px;\">______</div><div style=\"background-color: #273c56; color: #273c56; font-size: 7px;\">______</div><div style=\"background-color: #273c56; color: #273c56; font-size: 7px;\">______</div><div>Ref</div>" t "Quickly apply a Backdrop for Ref" -STARTLINE T "import colorsys\nn=nuke.thisNode()\ndef clamp(x):\n    return int(max(0, min(x, 255)))\ntile_color=n\['tile_color'].value()\ncolors=\[\[0.59, 0.55, 0.34], \[0.59, 0.55, 0.34], \[0.59, 0.55, 0.34]]\n#converting colors\ncolors_hex=\[colorsys.hsv_to_rgb(color\[0],color\[1],color\[2]) for color in colors]\ncolors_int=\[int('%02x%02x%02x%02x' % (clamp(color\[0]*255),clamp(color\[1]*255),clamp(color\[2]*255),255), 16) for color in colors_hex]\n#selecting color logic\nif tile_color in colors_int:\n    current_index=colors_int.index(tile_color)\n    if current_index >= (len(colors_int)-1):\n        new_color = colors_int\[0]\n    else:\n        new_color = colors_int\[current_index+1]\nelse:\n    new_color = colors_int\[0]\n#apply color\nn\['tile_color'].setValue(new_color)"}
+  addUserKnob {22 Cg l "<div style=\"background-color: #919599; color: #919599; font-size: 7px;\">______</div><div style=\"background-color: #919599; color: #919599; font-size: 7px;\">______</div><div style=\"background-color: #919599; color: #919599; font-size: 7px;\">______</div><div>Cg</div>" t "Quickly apply a Backdrop for CG" -STARTLINE T "import colorsys\nn=nuke.thisNode()\ndef clamp(x):\n    return int(max(0, min(x, 255)))\ntile_color=n\['tile_color'].value()\ncolors=\[\[0.58, 0.05, 0.6], \[0.58, 0.05, 0.6], \[0.58, 0.05, 0.6]]\n#converting colors\ncolors_hex=\[colorsys.hsv_to_rgb(color\[0],color\[1],color\[2]) for color in colors]\ncolors_int=\[int('%02x%02x%02x%02x' % (clamp(color\[0]*255),clamp(color\[1]*255),clamp(color\[2]*255),255), 16) for color in colors_hex]\n#selecting color logic\nif tile_color in colors_int:\n    current_index=colors_int.index(tile_color)\n    if current_index >= (len(colors_int)-1):\n        new_color = colors_int\[0]\n    else:\n        new_color = colors_int\[current_index+1]\nelse:\n    new_color = colors_int\[0]\n#apply color\nn\['tile_color'].setValue(new_color)"}
+  addUserKnob {22 Matte l "<div style=\"background-color: #0006aa; color: #0006aa; font-size: 7px;\">______</div><div style=\"background-color: #0006aa; color: #0006aa; font-size: 7px;\">______</div><div style=\"background-color: #0006aa; color: #0006aa; font-size: 7px;\">______</div><div>Matte</div>" t "Quickly apply a Backdrop for Matte" -STARTLINE T "import colorsys\nn=nuke.thisNode()\ndef clamp(x):\n    return int(max(0, min(x, 255)))\ntile_color=n\['tile_color'].value()\ncolors=\[\[0.66, 1.0, 0.67], \[0.66, 1.0, 0.67], \[0.66, 1.0, 0.67]]\n#converting colors\ncolors_hex=\[colorsys.hsv_to_rgb(color\[0],color\[1],color\[2]) for color in colors]\ncolors_int=\[int('%02x%02x%02x%02x' % (clamp(color\[0]*255),clamp(color\[1]*255),clamp(color\[2]*255),255), 16) for color in colors_hex]\n#selecting color logic\nif tile_color in colors_int:\n    current_index=colors_int.index(tile_color)\n    if current_index >= (len(colors_int)-1):\n        new_color = colors_int\[0]\n    else:\n        new_color = colors_int\[current_index+1]\nelse:\n    new_color = colors_int\[0]\n#apply color\nn\['tile_color'].setValue(new_color)"}
+  addUserKnob {22 Pub l "<div style=\"background-color: #465177; color: #465177; font-size: 7px;\">______</div><div style=\"background-color: #465177; color: #465177; font-size: 7px;\">______</div><div style=\"background-color: #465177; color: #465177; font-size: 7px;\">______</div><div>Pub</div>" t "Quickly apply a Backdrop for Pub" -STARTLINE T "import colorsys\nn=nuke.thisNode()\ndef clamp(x):\n    return int(max(0, min(x, 255)))\ntile_color=n\['tile_color'].value()\ncolors=\[\[0.63, 0.41, 0.47], \[0.63, 0.41, 0.47], \[0.63, 0.41, 0.47]]\n#converting colors\ncolors_hex=\[colorsys.hsv_to_rgb(color\[0],color\[1],color\[2]) for color in colors]\ncolors_int=\[int('%02x%02x%02x%02x' % (clamp(color\[0]*255),clamp(color\[1]*255),clamp(color\[2]*255),255), 16) for color in colors_hex]\n#selecting color logic\nif tile_color in colors_int:\n    current_index=colors_int.index(tile_color)\n    if current_index >= (len(colors_int)-1):\n        new_color = colors_int\[0]\n    else:\n        new_color = colors_int\[current_index+1]\nelse:\n    new_color = colors_int\[0]\n#apply color\nn\['tile_color'].setValue(new_color)"}
+  addUserKnob {26 S08 l " " T " "}
+  addUserKnob {4 oz_appearance l appearance -STARTLINE M {Fill Border}}
+  addUserKnob {7 oz_border_width l width -STARTLINE R 0 10}
+  oz_border_width 2
+  addUserKnob {26 divider2 l "" +STARTLINE}
+  addUserKnob {26 S02 l " " T " "}
+  addUserKnob {22 grow l " <img src=\"MergeMin.png\">" t "Grows the size of the Backdrop by 50pt in every direction" -STARTLINE T "n=nuke.thisNode()\n\ndef grow(node=None,step=50):\n    try:\n        if not node:\n            n=nuke.selectedNode()\n        else:\n            n=node\n            n\['xpos'].setValue(n\['xpos'].getValue()-step)\n            n\['ypos'].setValue(n\['ypos'].getValue()-step)\n            n\['bdwidth'].setValue(n\['bdwidth'].getValue()+step*2)\n            n\['bdheight'].setValue(n\['bdheight'].getValue()+step*2)\n    except e:\n        print('Error:: %s' % e)\n\ngrow(n,50)"}
+  addUserKnob {22 shrink l " <img src=\"MergeMax.png\">" t "Shrinks the size of the Backdrop by 50pt in every direction" -STARTLINE T "n=nuke.thisNode()\n\ndef shrink(node=None,step=50):\n    try:\n        if not node:\n            n=nuke.selectedNode()\n        else:\n            n=node\n            n\['xpos'].setValue(n\['xpos'].getValue()+step)\n            n\['ypos'].setValue(n\['ypos'].getValue()+step)\n            n\['bdwidth'].setValue(n\['bdwidth'].getValue()-step*2)\n            n\['bdheight'].setValue(n\['bdheight'].getValue()-step*2)\n    except e:\n        print('Error:: %s' % e)\n\nshrink(n,50)"}
+  addUserKnob {26 S03 l " " -STARTLINE T "     "}
+  addUserKnob {22 encompassSelectedNodes l " <img src=\"ContactSheet.png\">" t "Will resize the backdrop to encompass every selected nodes plus a padding number (the number next to the button)" -STARTLINE T "this = nuke.thisNode()\npadding = this\['sides'].getValue()\nif this.isSelected:\n    this.setSelected(False)\nselNodes = nuke.selectedNodes()\n        \ndef nodeIsInside (node, backdropNode):\n    # Returns true if node geometry is inside backdropNode otherwise returns false\n    topLeftNode = \[node.xpos(), node.ypos()]\n    topLeftBackDrop = \[backdropNode.xpos(), backdropNode.ypos()]\n    bottomRightNode = \[node.xpos() + node.screenWidth(), node.ypos() + node.screenHeight()]\n    bottomRightBackdrop = \[backdropNode.xpos() + backdropNode.screenWidth(), backdropNode.ypos() + backdropNode.screenHeight()]\n                    \n    topLeft = ( topLeftNode\[0] >= topLeftBackDrop\[0] ) and ( topLeftNode\[1] >= topLeftBackDrop\[1] )\n    bottomRight = ( bottomRightNode\[0] <= bottomRightBackdrop\[0] ) and ( bottomRightNode\[1] <= bottomRightBackdrop\[1] )\n                    \n    return topLeft and bottomRight\n\nif not selNodes:\n    nuke.message('Some nodes should be selected')\nelse:\n    # Calculate bounds for the backdrop node.\n    bdX = min(\[node.xpos() for node in selNodes])\n    bdY = min(\[node.ypos() for node in selNodes])\n    bdW = max(\[node.xpos() + node.screenWidth() for node in selNodes]) - bdX\n    bdH = max(\[node.ypos() + node.screenHeight() for node in selNodes]) - bdY\n                        \n    zOrder = 0\n    selectedBackdropNodes = nuke.selectedNodes( \"BackdropNode\" )\n\n    #if there are backdropNodes selected put the new one immediately behind the farthest one\n                \n    if len( selectedBackdropNodes ):\n        zOrder = min( \[node.knob( \"z_order\" ).value() for node in selectedBackdropNodes] ) - 1\n    else :\n        #otherwise (no backdrop in selection) find the nearest backdrop if exists and set the new one in front of it\n        nonSelectedBackdropNodes = nuke.allNodes(\"BackdropNode\")\n        for nonBackdrop in selNodes:\n            for backdrop in nonSelectedBackdropNodes:\n                if nodeIsInside( nonBackdrop, backdrop ):\n                    zOrder = max( zOrder, backdrop.knob( \"z_order\" ).value() + 1 )\n    \n    # Expand the bounds to leave a little border. Elements are offsets for left, top, right and bottom edges respectively\n    left, top, right, bottom = (-padding, -(padding+70), padding, padding)\n    bdX += left\n    bdY += top\n    bdW += (right - left)\n    bdH += (bottom - top)\n\n    this\['xpos'].setValue(bdX)\n    this\['bdwidth'].setValue(bdW)\n    this\['ypos'].setValue(bdY)\n    this\['bdheight'].setValue(bdH)\n    this\['z_order'].setValue(zOrder)\n"}
+  addUserKnob {26 S04 l " " -STARTLINE T " "}
+  addUserKnob {3 sides l "" t "When encompassing nodes this number of pt will be added to the Backdrop size in every direction" -STARTLINE}
+  sides 50
+  addUserKnob {26 divider3 l "" +STARTLINE}
+  addUserKnob {26 S05 l " " -STARTLINE T " "}
+  addUserKnob {26 pos_text l Position -STARTLINE T " "}
+  addUserKnob {3 node_position_x l x -STARTLINE}
+  node_position_x -1034
+  addUserKnob {3 node_position_y l y -STARTLINE}
+  node_position_y -1510
+  addUserKnob {26 S06 l " " T " "}
+  addUserKnob {14 sizeNode l Size -STARTLINE R 0 100}
+  sizeNode {726 424}
+  addUserKnob {26 S07 l " " -STARTLINE T "     "}
+  addUserKnob {3 zorder l "Z Order" -STARTLINE}
+ }
+ Reformat {
+  inputs 0
+  format "1920 1080 0 0 1920 1080 1 FHD"
+  black_outside true
+  name Reformat6
+  xpos -1663
+  ypos -889
+ }
+ Text {
+  cliptype none
+  message "\[value parent.comments]"
+  font "\[value parent.font]"
+  size 33
+  xjustify center
+  yjustify center
+  Transform 1
+  box {500 943 1920 1080}
+  center {1024 778}
+  name comments1
+  xpos -1663
+  ypos -853
+ }
+ Dot {
+  name Dot5
+  label "\n\[\nif \{\[value hide_input] && \[value inputs] == 1\} \{\n    knob note_font_size 22\n    knob note_font_color 16777217\n    return \"  \[value input.name]\"\n    \}\nif \{\[value hide_input] && \[value inputs] == 0\} \{\n    knob note_font_size 99\n    knob note_font_color 3422552065\n    return \"Disconnected!\"\n    \}\n]\n"
+  xpos -1629
+  ypos -255
+ }
+ Reformat {
+  inputs 0
+  type "to box"
+  format "1920 1080 0 0 1920 1080 1 FHD"
+  box_width 2048
+  box_height 1152
+  box_fixed true
+  black_outside true
+  name Reformat7
+  xpos -1490
+  ypos -876
+ }
+ Text {
+  cliptype none
+  message "\[\nif \{\[expression parent.inputs] == 1\} \{\n    set last_frame \[expression parent.input.last_frame];\n    \} else \{\n    set last_frame \[expression root.last_frame];\n\}\n\nreturn \[frame]/\$last_frame\n]"
+  font "\[value parent.font]"
+  size 70
+  xjustify center
+  yjustify center
+  Transform 1
+  box {1458 1 1921 139}
+  center {1024 778}
+  name frame1
+  xpos -1490
+  ypos -852
+ }
+ Dot {
+  name Dot7
+  label "\n\[\nif \{\[value hide_input] && \[value inputs] == 1\} \{\n    knob note_font_size 22\n    knob note_font_color 16777217\n    return \"  \[value input.name]\"\n    \}\nif \{\[value hide_input] && \[value inputs] == 0\} \{\n    knob note_font_size 99\n    knob note_font_color 3422552065\n    return \"Disconnected!\"\n    \}\n]\n"
+  xpos -1456
+  ypos -330
+ }
+ Reformat {
+  inputs 0
+  type "to box"
+  format "1920 1080 0 0 1920 1080 1 FHD"
+  box_width 2048
+  box_height 1152
+  box_fixed true
+  black_outside true
+  name Reformat3
+  xpos -1332
+  ypos -875
+ }
+ Text {
+  cliptype none
+  message "\[date %d.%m.%Y]"
+  font "\[value parent.font]"
+  size 35
+  yjustify center
+  Transform 1
+  box {1108.400024 1 1303.800049 139}
+  translate {45 0}
+  center {1024 778}
+  name date1
+  xpos -1332
+  ypos -851
+ }
+ Dot {
+  name Dot6
+  label "\n\[\nif \{\[value hide_input] && \[value inputs] == 1\} \{\n    knob note_font_size 22\n    knob note_font_color 16777217\n    return \"  \[value input.name]\"\n    \}\nif \{\[value hide_input] && \[value inputs] == 0\} \{\n    knob note_font_size 99\n    knob note_font_color 3422552065\n    return \"Disconnected!\"\n    \}\n]\n"
+  xpos -1298
+  ypos -400
+ }
+ Reformat {
+  inputs 0
+  type "to box"
+  format "1920 1080 0 0 1920 1080 1 FHD"
+  box_width 2048
+  box_height 1152
+  box_fixed true
+  black_outside true
+  name Reformat5
+  xpos -1174
+  ypos -875
+ }
+ Text {
+  cliptype none
+  message "Arist: \[value parent.artist]"
+  font "\[value parent.font]"
+  size 35
+  yjustify center
+  Transform 1
+  box {733.2999878 0 1114.299988 138}
+  translate {30 0}
+  center {1024 778}
+  name artist1
+  xpos -1174
+  ypos -851
+ }
+ Dot {
+  name Dot4
+  label "\n\[\nif \{\[value hide_input] && \[value inputs] == 1\} \{\n    knob note_font_size 22\n    knob note_font_color 16777217\n    return \"  \[value input.name]\"\n    \}\nif \{\[value hide_input] && \[value inputs] == 0\} \{\n    knob note_font_size 99\n    knob note_font_color 3422552065\n    return \"Disconnected!\"\n    \}\n]\n"
+  xpos -1140
+  ypos -475
+ }
+ Reformat {
+  inputs 0
+  type "to box"
+  format "1920 1080 0 0 1920 1080 1 FHD"
+  box_width 2048
+  box_height 1152
+  box_fixed true
+  black_outside true
+  name Reformat4
+  xpos -1027
+  ypos -874
+ }
+ Text {
+  cliptype none
+  message "\[\nif \{\[input_connected] != 1\} \{return\}\nif \{\[topnode_is_read] != 1\} \{return\}\nif \{\[value parent.version] > 0\} \{return \"Version: \[format %.3d \[value parent.version]]\"\};\n\nset file_path \[value \[topnode parent].file];\n\nset full_name \[get_file_full_name \$file_path];\nset version \[get_version \$full_name];\n\nif \{\$version == -1\} \{return \"Version Not Found\"\}\n\nreturn \"Version: \$version\"\n]"
+  font "\[value parent.font]"
+  size 35
+  yjustify center
+  Transform 1
+  box {440 0 638 139}
+  translate {15 0}
+  center {1024 778}
+  name version1
+  xpos -1027
+  ypos -850
+ }
+ Dot {
+  name Dot3
+  label "\n\[\nif \{\[value hide_input] && \[value inputs] == 1\} \{\n    knob note_font_size 22\n    knob note_font_color 16777217\n    return \"  \[value input.name]\"\n    \}\nif \{\[value hide_input] && \[value inputs] == 0\} \{\n    knob note_font_size 99\n    knob note_font_color 3422552065\n    return \"Disconnected!\"\n    \}\n]\n"
+  xpos -993
+  ypos -544
+ }
+ Reformat {
+  inputs 0
+  type "to box"
+  format "1920 1080 0 0 1920 1080 1 FHD"
+  box_width 2048
+  box_height 1152
+  box_fixed true
+  black_outside true
+  name Reformat9
+  xpos -871
+  ypos -869
+ }
+ Text {
+  cliptype none
+  message "\[\nif \{\[input_connected] != 1\} \{return \"Input not connected!\"\};\nif \{\[topnode_is_read] != 1\} \{return \"Topnode is not Read!\"\};\nif \{\[value parent.shot] != \"\"\} \{return \"Shot: \[value parent.shot]\"\};\n\nset file_path \[value \[topnode parent].file];\n\nset full_name \[get_file_full_name \$file_path];\nset name \[regsub -line \{_v\\d+.+\} \$full_name \"\"];\nset name \[regsub -all -line \[value parent.pattern_to_delete] \$name \"\"];\n\nreturn \"Shot: \$name\"\n]"
+  font "\[value parent.font]"
+  size 35
+  yjustify center
+  Transform 1
+  box {50 -1 431 138}
+  center {1024 778}
+  name shot1
+  xpos -871
+  ypos -845
+ }
+ Dot {
+  name Dot2
+  label "\n\[\nif \{\[value hide_input] && \[value inputs] == 1\} \{\n    knob note_font_size 22\n    knob note_font_color 16777217\n    return \"  \[value input.name]\"\n    \}\nif \{\[value hide_input] && \[value inputs] == 0\} \{\n    knob note_font_size 99\n    knob note_font_color 3422552065\n    return \"Disconnected!\"\n    \}\n]\n"
+  xpos -837
+  ypos -623
+ }
+ Reformat {
+  inputs 0
+  type "to box"
+  format "1920 1080 0 0 1920 1080 1 FHD"
+  box_width 2048
+  box_height 1152
+  box_fixed true
+  black_outside true
+  name Reformat2
+  xpos -720
+  ypos -867
+ }
+ Text {
+  cliptype none
+  message "\[\nset project \[value parent.project];\n\nif \{\$project == \"\"\} \{return \"Unknown Project\"\} \{return \$project\}\n\n\n\n]"
+  font "\[value parent.font]"
+  yjustify center
+  Transform 1
+  box {50 943 523 1080}
+  center {1024 778}
+  name project1
+  xpos -720
+  ypos -843
+ }
+ Merge2 {
+  inputs 2
+  name Merge2
+  label "\[value Bchannels]"
+  xpos -720
+  ypos -632
+ }
+ Merge2 {
+  inputs 2
+  name Merge3
+  label "\[value Bchannels]"
+  xpos -720
+  ypos -553
+ }
+ Merge2 {
+  inputs 2
+  name Merge4
+  label "\[value Bchannels]"
+  xpos -720
+  ypos -484
+ }
+ Merge2 {
+  inputs 2
+  name Merge6
+  label "\[value Bchannels]"
+  xpos -720
+  ypos -409
+ }
+ Merge2 {
+  inputs 2
+  name Merge7
+  label "\[value Bchannels]"
+  xpos -720
+  ypos -339
+ }
+ Merge2 {
+  inputs 2
+  name Merge5
+  label "\[value Bchannels]"
+  xpos -720
+  ypos -264
+ }
+ Transform {
+  scale {{2048/1920}}
+  name Transform3
+  xpos -720
+  ypos -205
+ }
+ Dot {
+  name Dot1
+  label "\n\[\nif \{\[value hide_input] && \[value inputs] == 1\} \{\n    knob note_font_size 22\n    knob note_font_color 16777217\n    return \"  \[value input.name]\"\n    \}\nif \{\[value hide_input] && \[value inputs] == 0\} \{\n    knob note_font_size 99\n    knob note_font_color 3422552065\n    return \"Disconnected!\"\n    \}\n]\n"
+  xpos -686
+  ypos -152
+ }
+ Input {
+  inputs 0
+  name Input1
+  xpos -417
+  ypos -1675
+ }
+ Reformat {
+  type "to box"
+  format "1920 1080 0 0 1920 1080 1 FHD"
+  box_width 2048
+  box_height 1152
+  box_fixed true
+  black_outside true
+  name Reformat8
+  xpos -417
+  ypos -1588
+ }
+ Crop {
+  box {0 0 2048 1152}
+  reformat true
+  crop false
+  name Crop1
+  xpos -417
+  ypos -1564
+ }
+ Text {
+  cliptype none
+  message "\[proc file_is_sequence \{file_path\} \{\n\n    set endswith \[file extension \$file_path];\n\n    if \{\$endswith == \".mov\" || \$endswith == \".mp4\"\} \{\n        return 0\n    \} else \{\n        return 1\n    \}\n\}\nreturn\n]"
+  font "\[value parent.font]"
+  size 150
+  yjustify top
+  Transform 1
+  box {0 0 {width} {height}}
+  center {1712 1101}
+  color 0
+  name file_is_sequence
+  xpos -417
+  ypos -1394
+ }
+ Text {
+  cliptype none
+  message "\[\nproc get_file_full_name \{file_path\} \{\n    \n    if \{\[file_is_sequence \$file_path] == 1\} \{\n        return \[basename \[file dirname \$file_path]];\n    \} else \{\n        return \[basename \$file_path];\n    \}\n\}\nreturn\n]"
+  font "\[value parent.font]"
+  size 150
+  yjustify top
+  Transform 1
+  box {0 0 {width} {height}}
+  center {1712 1101}
+  color 0
+  name get_file_full_name
+  xpos -417
+  ypos -1356
+ }
+ Text {
+  cliptype none
+  message "\[\nproc input_connected \{\} \{\n    if \{\[expression parent.inputs] == 1\} \{\n        return 1\n    \} else \{\n        return 0\n    \}\n\}\nreturn\n]"
+  font "\[value parent.font]"
+  size 150
+  yjustify top
+  Transform 1
+  box {0 0 {width} {height}}
+  center {1712 1101}
+  color 0
+  name input_connected
+  xpos -417
+  ypos -1318
+ }
+ Text {
+  cliptype none
+  message "\[\nproc topnode_is_read \{\} \{\n    set topnode_class \[class \[topnode parent]];\n    if \{\$topnode_class == \"Read\"\} \{\n        return 1\n    \} else \{\n        return 0\n    \}\n\}\nreturn\n]"
+  font "\[value parent.font]"
+  size 150
+  yjustify top
+  Transform 1
+  box {0 0 {width} {height}}
+  center {1712 1101}
+  color 0
+  name topnode_is_read
+  xpos -417
+  ypos -1280
+ }
+ Text {
+  cliptype none
+  message "\[\nproc get_version \{file_name\} \{\n    # Возвращает версию\n    #\n    # param file_name: str | Имя, откуда берем версию\n    # return:-1, если версия не найдена или версию\n\n    set all_full_version \[regexp -all -inline \{_v\\d+\} \$file_name];\n    if \{\[llength \$all_full_version] == 0\} \{return -1\};\n    set full_version \[lindex \$all_full_version end];\n    return \[regexp -inline \{\\d+\} \$full_version];\n\}\nreturn\n]"
+  font "\[value parent.font]"
+  size 150
+  yjustify top
+  Transform 1
+  box {0 0 {width} {height}}
+  center {1712 1101}
+  color 0
+  name get_version
+  xpos -417
+  ypos -1240
+ }
+ Merge2 {
+  inputs 2
+  name Merge1
+  label "\[value Bchannels]"
+  xpos -417
+  ypos -162
+ }
+ Crop {
+  box {0 0 2048 1152}
+  name Crop2
+  xpos -417
+  ypos -126
+ }
+ Output {
+  name Output1
+  xpos -417
+  ypos 105
+ }
+ Viewer {
+  frame_range 1001-1093
+  fps 25
+  viewerProcess "sRGB (ACES)"
+  monitorOutNDISenderName "NukeX - sh170_comp_v001_crowd_test - Viewer1"
+  name Viewer1
+  xpos -517
+  ypos 205
+ }
+end_group

@@ -22,11 +22,18 @@ File structure after export. A folder with all files is created next to the 3DEq
 │   └── sh000_00_track_v001.####.exr | "Exr Zip Raw"
 ├── undistort
 │   └── sh000_00_track_v001.####.exr | "Exr Dwaa Raw"
+├── undistort_downscale
+│   └── sh000_00_track_v001.####.exr | "Exr Dwaa Raw"
 ├── sh000_00_track_v001.3de
 ├── sh000_00_track_v001.abc | "Camera + Geo"
 ├── sh000_00_track_v001.fbx | "Camera + Geo"
 ├── sh000_00_track_v001.mov | "Mov H264 Srgb"
 └── sh000_00_track_v001.nk
+
+Optionally (can be included in userconfig.py):
+├── Separate export of Camera and Geo for .abc and .fbx
+├── sh000_00_track_undistort_v001.nk | Only Undistort node
+└── sh000_00_track_v001.mel
 ```
 
 ---
@@ -61,29 +68,12 @@ os.environ["PYTHON_CUSTOM_SCRIPTS_3DE4"] = root_path + os.path.pathsep + scripts
 # Run 3DEqualizer.
 subprocess.run(["/path/to/3DE4.exe"])
 ```
-Optioanl environment variables. Leave blank or don't add to code to ignore them:
-```python
-# By default name is "sh000_00_track_v001".
-os.environ["MMEXPORTER_CUSTOM_DEFAULT_NAME"] = ""
+To configure the program for the studio, use the `userconfig.py` file.
 
-# By default pattern is "[seq_name]_sh<shot_number>_<task_number>_track_v000_[definition]".
-os.environ["MMEXPORTER_CUSTOM_NAME_PATTERN"] = ""
+You may delete the `launcher` and `resources` folders.
 
-# Path to custom log path. Default is "/match-move-exporter/logs/log.log".
-os.environ["MMEXPORTER_CUSTOM_LOG_PATH"] = ""
-
-# Assign value "1", if lens distortion plugins already installed to Nuke.
-# Otherwise, path will be "/plugins/3de4_lens_distortion_plugin_kit"
-os.environ["MMEXPORTER_NUKE_LENS_PLUGINS_INSTALLED"] = ""
-
-# Assign value "1", to name export folder as version + postfix.
-# Otherwise, it will has full name.
-os.environ["MMEXPORTER_EXPORT_FOLDER_IS_VERSION"] = ""
-```
-You can delete `launcher` and `resources` folders.
-
-You can delete `plugins` folder if you use `MMEXPORTER_NUKE_LENS_PLUGINS_INSTALLED` and [lenses](https://www.3dequalizer.com/?site=tech_docs&id=110216_01) already installed to Nuke.
-
+You may delete the `plugins` folder if the [lenses](https://www.3dequalizer.com/?site=tech_docs&id=110216_01) are 
+already installed in Nuke or if you have modified the path to them in the `get_3de4_lenses_for_nuke_path()` method.
 ---
 
 ### 3DEqualizer knowledge base:

@@ -2,6 +2,7 @@ import os
 import re
 import platform
 import subprocess
+import tempfile
 
 
 def get_root_path() -> str:
@@ -20,11 +21,11 @@ def get_3de4_lenses_for_nuke_path() -> str:
 
 def get_version_with_postfix(name: str) -> str:
     """Using regular expression detect version and postfix in name.
-    If not found return empty string."""
+    If not found return name itself."""
     versions = re.findall("_v\d+(?:_.+)?", name)
     if versions:
         return versions[-1][1:]  # return last version and delete first symbol "_"
-    return ""
+    return name
 
 
 def open_in_explorer(path: str) -> None:
@@ -39,3 +40,11 @@ def open_in_explorer(path: str) -> None:
             subprocess.call(["open", "-R", path])
         else:
             subprocess.call(["nautilus", "--select", path])
+
+def get_temp_filepath(fullname: str) -> str:
+    temp_filepath = os.path.join(
+        tempfile.gettempdir(),
+        fullname
+    )
+    os.makedirs(os.path.dirname(temp_filepath), exist_ok=True)
+    return temp_filepath

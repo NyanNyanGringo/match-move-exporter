@@ -16,10 +16,15 @@ import re
 import shutil
 import tempfile
 
-from MatchMoveExporter.lib.utilities.os_utilities import get_root_path, get_3de4_lenses_for_nuke_path
+from MatchMoveExporter.lib.utilities.export_maya import _maya_export_mel_file
+from MatchMoveExporter.lib.utilities.os_utilities import get_root_path, get_temp_filepath
 from MatchMoveExporter.lib.utilities.nuke_utilities import get_export_pyscript, execute_nuke_script, get_nuke_script_path
 from MatchMoveExporter.lib.utilities.log_utilities import setup_or_get_logger
 from MatchMoveExporter.lib.utilities.export_nuke_LD_3DE4_Lens_Distortion_Node import exportNukeDewarpNode
+from MatchMoveExporter.lib.utilities import config_utilities
+from MatchMoveExporter.lib.utilities.config_utilities import ConfigKeys
+
+from MatchMoveExporter.userconfig import UserConfig
 
 
 LOGGER = setup_or_get_logger(force_setup=True, use_console_handler=False)
@@ -58,13 +63,17 @@ def check_nuke_script_name() -> bool:
     """Check name entered by the user."""
     nuke_script_name: str = tde4.getWidgetValue(requester, "textfield_name")
 
-    if nuke_script_name.strip():
-        return True
+    if not nuke_script_name.strip():
+        message = "Parameter name can't be empty."
+        tde4.postQuestionRequester("Message", message, "OK")
+        return False
 
-    message = "Parameter name can't be empty."
-    tde4.postQuestionRequester("Message", message, "OK")
+    if not re.findall("_v\d+", nuke_script_name):
+        message = "Please specify version in name."
+        tde4.postQuestionRequester("Message", message, "OK")
+        return False
 
-    return False
+    return True
 
 def check_project_exists() -> bool:
     """Check any 3DE4 project opened."""
@@ -87,7 +96,6 @@ def check_and_remove_files_in_existed_path(path) -> bool:
                                                   f"Continue?", "Yes", "No")
         if request == 1:  # 1 is True, 2 is False
             shutil.rmtree(folder_path)
-            os.mkdir(folder_path)
             return True
         else:
             return False
@@ -105,17 +113,17 @@ def button_clicked_callback(requester, widget, action) -> None:
 def label_changed_callback(requester, widget, action) -> None:
     LOGGER.info(f"New callback from widget {widget} received, action: {action}")
 
+def project_changed_callback(requester, widget, action) -> None:
+    LOGGER.info(f"New callback from widget {widget} received, action: {action}")
+    save_config()
+
+def username_changed_callback(requester, widget, action) -> None:
+    LOGGER.info(f"New callback from widget {widget} received, action: {action}")
+    save_config()
 
 def _MatchMoveExporterUpdate(requester) -> None:
     LOGGER.info("New update callback received, put your code here...")
-
-    custom_name_pattern = os.getenv("MMEXPORTER_CUSTOM_NAME_PATTERN")
-    if custom_name_pattern:
-        tde4.setWidgetLabel(requester, "label_pattern", custom_name_pattern)
-
-    custom_default_name = os.getenv("MMEXPORTER_CUSTOM_DEFAULT_NAME")
-    if custom_name_pattern:
-        tde4.setWidgetValue(requester, "textfield_name", custom_default_name)
+    load_config()
 
 
 # 3DE4 FUNCTIONS
@@ -142,22 +150,29 @@ def export_tracking_data_through_nuke(script_name: str):
     if not check_and_remove_files_in_existed_path(nuke_script_path):
         return
 
+    os.makedirs(os.path.dirname(nuke_script_path), exist_ok=True)
+
     # get json data from 3DEqualizer to use it in Python Script
     json_for_nuke_path = JsonForNuke().get_json_path()
     LOGGER.info(f"json_for_nuke_path: {json_for_nuke_path}")
 
     # PATHS_TO_ADD_TO_NUKE_PATH
     PATHS_TO_ADD_TO_NUKE_PATH = []
-    if not os.getenv("MMEXPORTER_NUKE_LENS_PLUGINS_INSTALLED"):
-        PATHS_TO_ADD_TO_NUKE_PATH.append(get_3de4_lenses_for_nuke_path())
+    lenses_path = UserConfig.get_3de4_lenses_for_nuke_path()
+    if lenses_path:
+        PATHS_TO_ADD_TO_NUKE_PATH.append(lenses_path)
+
+    gizmos_path = UserConfig.get_gizmos_path()
+    if gizmos_path:
+        PATHS_TO_ADD_TO_NUKE_PATH.append(gizmos_path)
 
     # execute
     execute_nuke_script(NUKE_EXECUTABLE,  # nuke_exec_path
                         nuke_pyscript,  # py_script_path
-                        nuke_script_path,  # args: add nuke script path
-                        json_for_nuke_path,  # args: add json data path
-                        PATHS_TO_ADD_TO_PYTHONPATH=[get_root_path()],  # kwargs: add access to lib folder for nuke
-                        PATHS_TO_ADD_TO_NUKE_PATH=PATHS_TO_ADD_TO_NUKE_PATH  # kwargs: add access to 3de4 plugins
+                        nuke_script_path,  # add nuke script path
+                        json_for_nuke_path,  # add json data path
+                        [get_root_path()],  # add access to lib folder for nuke
+                        PATHS_TO_ADD_TO_NUKE_PATH  # add access to 3de4 plugins and dailies gizmo
                         )
 
 
@@ -186,11 +201,12 @@ class JsonForNuke:
         Generates json file in format:
         {
         "program": "3DE4" or "SynthEyes"  # name of program.
-        "offset": 0,  # frame offset. Usually 1001.
+        "offset": 0,  # usually 1001
+        "original_range": [0, 0, 0],  # original range that was used from source
+        "calculation_range": [0, 0],  # range of final calculation
         "fps": 0,
         "width": 0,  # width of the first camera.
         "height": 0,  # height of the first camera.
-        "range": [0, 0],  # range of the first camera.
         "cameras": [
             {
                 "axis": {
@@ -253,22 +269,28 @@ class JsonForNuke:
                     },
                 "geo": [".../Temp/SomeGeo.obj", ...]
                 ],
-        "3de4_project_path": ".../path/to/equalizer_project.3de"
+        "3de4_project_path": ".../path/to/equalizer_project.3de",
+        "maya_project_path": ".../Temp/temp_maya_script_from_mmexporter.mel",
     }
         """
         first_camera = tde4.getFirstCamera()
+        calculation_range = tde4.getCameraCalculationRange(first_camera) if tde4.getCameraFrameRangeCalculationFlag(
+            first_camera) else []
         JSON = {
             "program": "3DE4",
 
             "offset": tde4.getCameraFrameOffset(first_camera),
+            "original_range": tde4.getCameraSequenceAttr(first_camera),
+            "calculation_range": calculation_range,
+
             "fps": tde4.getCameraFPS(first_camera),
             "width": tde4.getCameraImageWidth(first_camera),
             "height": tde4.getCameraImageHeight(first_camera),
-            "range": tde4.getCameraCalculationRange(first_camera),
-
             "cameras": self.get_cameras_list(),
             "point_groups": self.get_point_group_list(),
-            "3de4_project_path": tde4.getProjectPath()
+            "3de4_project_path": tde4.getProjectPath(),
+
+            "maya_project_path": self.get_maya_temp_project_path()
         }
 
         return JSON
@@ -276,12 +298,7 @@ class JsonForNuke:
     def get_camera_dict(self, camera) -> dict:
         offset = tde4.getCameraFrameOffset(camera)
         camera_name = validName(tde4.getCameraName(camera))
-
-        nk_undistort_path = os.path.join(
-            tempfile.gettempdir(),
-            f"undistort_for_{camera_name}.nk"
-        )
-        os.makedirs(os.path.dirname(nk_undistort_path), exist_ok=True)
+        nk_undistort_path = get_temp_filepath(f"undistort_for_{camera_name}.nk")
         exportNukeDewarpNode(camera, offset, nk_undistort_path)
 
         camera_translate_x, camera_translate_y, camera_translate_z = [], [], []
@@ -388,13 +405,14 @@ class JsonForNuke:
 
         # collect geo of point group
         geo = []
-        for model in tde4.get3DModelList(pg, 0):  # 0 means selected only False
+        if UserConfig.export_geo:
+            for model in tde4.get3DModelList(pg, 0):  # 0 means selected only False
 
-            if not tde4.get3DModelVisibleFlag(pg, model):
-                continue
+                if not tde4.get3DModelVisibleFlag(pg, model):
+                    continue
 
-            filepath = get_obj_filepath(pg, model)
-            geo.append(filepath)
+                filepath = get_obj_filepath(pg, model)
+                geo.append(filepath)
 
         point_group_dict = {
             "type": tde4.getPGroupType(pg),
@@ -425,6 +443,24 @@ class JsonForNuke:
                 point_groups.append(self.get_point_group_dict(point_group, camera))
 
         return point_groups
+
+    def get_maya_temp_project_path(self) -> str:
+        temp_filepath = get_temp_filepath(f"temp_maya_script_from_mmexporter.mel")
+
+        _maya_export_mel_file(
+            path=temp_filepath,
+            campg=[pg for pg in tde4.getPGroupList() if tde4.getPGroupType(pg) == "CAMERA"][0],  # Camera Point Group
+            camera_list=tde4.getCameraList(),
+            model_selection=1,  # means 'No 3D Models At All'
+            overscan_w_pc=1.0,
+            overscan_h_pc=1.0,
+            export_material=0,  # means not to export UV textures
+            unit_scale_factor=1.0,  # cm -> cm
+            frame0=float(tde4.getCameraFrameOffset(tde4.getFirstCamera())),  # start frame
+            hide_ref=0  # means not to hires reference frames
+        )
+
+        return temp_filepath
 
 
 def get_obj_filepath(pg: int, model: int) -> str:
@@ -565,6 +601,34 @@ def validName(name):
     return name
 
 
+# CONFIG
+
+
+def save_config():
+    config_utilities.write_config(
+        ConfigKeys.PROJECT, tde4.getWidgetValue(requester, "textfield_project")
+    )
+
+    config_utilities.write_config(
+        ConfigKeys.USERNAME, tde4.getWidgetValue(requester, "textfield_username")
+    )
+
+def load_config():
+    config_utilities.setup_config()
+
+    tde4.setWidgetValue(requester, "textfield_name", UserConfig.get_default_name())
+
+    tde4.setWidgetLabel(requester, "label_pattern", UserConfig.get_name_pattern())
+
+    if config_utilities.check_key(ConfigKeys.PROJECT):
+        value = config_utilities.read_config_key(ConfigKeys.PROJECT)
+        tde4.setWidgetValue(requester, "textfield_project", value)
+
+    if config_utilities.check_key(ConfigKeys.USERNAME):
+        value = config_utilities.read_config_key(ConfigKeys.USERNAME)
+        tde4.setWidgetValue(requester, "textfield_username", value)
+
+
 #
 # DO NOT ADD ANY CUSTOM CODE BEYOND THIS POINT!
 #
@@ -587,9 +651,28 @@ except (ValueError,NameError,TypeError):
     tde4.setWidgetOffsets(requester,"label_pattern",60,60,15,0)
     tde4.setWidgetAttachModes(requester,"label_pattern","ATTACH_WINDOW","ATTACH_WINDOW","ATTACH_WIDGET","ATTACH_NONE")
     tde4.setWidgetSize(requester,"label_pattern",200,20)
-    tde4.setWidgetLinks(requester,"button_export","","","label_pattern","")
-    tde4.setWidgetLinks(requester,"textfield_name","","","","")
-    tde4.setWidgetLinks(requester,"label_pattern","","","textfield_name","")
+    tde4.addTextFieldWidget(requester,"textfield_username","username","")
+    tde4.setWidgetOffsets(requester,"textfield_username",140,60,60,0)
+    tde4.setWidgetAttachModes(requester,"textfield_username","ATTACH_WINDOW","ATTACH_WINDOW","ATTACH_WIDGET","ATTACH_NONE")
+    tde4.setWidgetSize(requester,"textfield_username",200,20)
+    tde4.setWidgetCallbackFunction(requester,"textfield_username","username_changed_callback")
+    tde4.setWidgetBGColor(requester,"textfield_username",0.180000,0.180000,0.180000)
+    tde4.addSeparatorWidget(requester,"separator")
+    tde4.setWidgetOffsets(requester,"separator",60,60,30,0)
+    tde4.setWidgetAttachModes(requester,"separator","ATTACH_WINDOW","ATTACH_WINDOW","ATTACH_WIDGET","ATTACH_NONE")
+    tde4.setWidgetSize(requester,"separator",200,20)
+    tde4.addTextFieldWidget(requester,"textfield_project","project","")
+    tde4.setWidgetOffsets(requester,"textfield_project",140,60,30,0)
+    tde4.setWidgetAttachModes(requester,"textfield_project","ATTACH_WINDOW","ATTACH_WINDOW","ATTACH_WIDGET","ATTACH_NONE")
+    tde4.setWidgetSize(requester,"textfield_project",200,20)
+    tde4.setWidgetCallbackFunction(requester,"textfield_project","project_changed_callback")
+    tde4.setWidgetBGColor(requester,"textfield_project",0.180000,0.180000,0.180000)
+    tde4.setWidgetLinks(requester,"button_export","textfield_project","textfield_project","label_pattern","textfield_project")
+    tde4.setWidgetLinks(requester,"textfield_name","textfield_project","textfield_project","textfield_project","textfield_project")
+    tde4.setWidgetLinks(requester,"label_pattern","textfield_project","textfield_project","textfield_name","textfield_project")
+    tde4.setWidgetLinks(requester,"textfield_username","textfield_project","textfield_project","separator","textfield_project")
+    tde4.setWidgetLinks(requester,"separator","textfield_project","textfield_project","button_export","textfield_project")
+    tde4.setWidgetLinks(requester,"textfield_project","textfield_project","textfield_project","separator","textfield_project")
     _MatchMoveExporter_requester = requester
 
 #
