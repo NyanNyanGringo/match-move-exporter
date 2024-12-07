@@ -82,7 +82,7 @@ def _get_filepath_for_write(folder_name: str = None, intermediate_name: str = No
 
 
 def _setup_read_node(read_node: nuke.Node) -> nuke.Node:
-    read_node["raw"].setValue(True)
+    read_node["colorspace"].setValue(UserConfig.get_read_node_colorspace(read_node["file"].value()))
 
     read_node["first"].setValue(ORIGINAL_FIRST)
     read_node["last"].setValue(ORIGINAL_LAST)
@@ -314,6 +314,11 @@ def _set_root_settings():
     nuke.Root()["last_frame"].setValue(LAST_FRAME)
     nuke.Root()["lock_range"].setValue(True)
 
+    colorManagement, OCIO_config = UserConfig.get_color_manager_and_config()
+    nuke.Root()["colorManagement"].setValue(colorManagement)
+    nuke.Root()["OCIO_config"].setValue(OCIO_config)
+    nuke.Root()["reloadConfig"].execute()
+
 def _create_stmap_node() -> nuke.Node:
     stmap = _create_node("Expression", knobs={"expr0": "x/(width-1)", "expr1": "y/(height-1)", "expr2": "0"})
     stmap.setName("STmap")
@@ -341,7 +346,6 @@ def _create_write_dailies(intermediate_name: str = None) -> nuke.Node:
         filepath += f"{intermediate_name}/"
     filepath += "[file rootname [basename [value root.name]]].mov"
     write["file"].setValue(filepath)
-    write["colorspace"].setValue("sRGB")
     write["file_type"].setValue("mov")
     write["mov64_codec"].setValue("h264")
     write["mov64_fps"].setExpression("[value root.fps]")
@@ -350,6 +354,10 @@ def _create_write_dailies(intermediate_name: str = None) -> nuke.Node:
     write["first"].setValue(FIRST_FRAME)
     write["last"].setValue(LAST_FRAME)
     write["use_limit"].setValue(True)
+
+    for knob_name, value in UserConfig.get_dailies_configuration().items():
+        write[knob_name].setValue(value)
+
     return write
 
 def _create_write_stmap(intermediate_name: str = None) -> nuke.Node:
@@ -434,6 +442,8 @@ def _create_write_geo(file_type: str, intermediate_name: str = None, layer_name:
     write_geo["last"].setValue(LAST_FRAME)
     write_geo["use_limit"].setValue(True)
     write_geo["file_type"].setValue(file_type)
+    if file_type == "abc":
+        write_geo["storageFormat"].setValue("Ogawa")
     if file_type == "fbx":
         write_geo["animateMeshVertices"].setValue(True)
     return write_geo
@@ -550,7 +560,6 @@ def _shuffle_and_render_nodes(nodes_data) -> None:
             {
                 "camera": nuke.Node
                 "read": nuke.Node,
-                "color_nodes": [nuke.Node, ...],
                 "undistort": nuke.Node,
                 "stmap": nuke.Node,
                 "name": str
@@ -588,26 +597,10 @@ def _shuffle_and_render_nodes(nodes_data) -> None:
         y_pos += 60
         undistort.setXYpos(x_pos, y_pos)
 
-        # color nodes
-        color_nodes = read_group["color_nodes"]
-        current_node = None
-        previous_node = undistort
-        for i in range(0, len(color_nodes)):
-            current_node = color_nodes[i]
-
-            if i == 0:
-                y_pos += 120
-            else:
-                previous_node = color_nodes[i-1]
-
-            current_node.setInput(0, previous_node)
-            current_node.setXYpos(x_pos, y_pos)
-            y_pos += 26
-
         # dot + scanline + camera + merge
         y_pos += 120
 
-        dot = _create_node("Dot", current_node)
+        dot = _create_node("Dot", undistort)
         dot.setXYpos(x_pos + 34, y_pos + 4)
 
         camera = read_group["camera"]
@@ -665,6 +658,8 @@ def _start():
     nuke.scriptOpen(NUKE_SCRIPT)
     nuke.scriptSave(NUKE_SCRIPT)  # save to crete file
 
+    _set_root_settings()
+
     read_groups = []
     for index, camera_data in enumerate(JSON_DATA["cameras"]):
         read = _setup_read_node(import_file_as_read_node(camera_data["source"]["path"]))
@@ -681,9 +676,6 @@ def _start():
                                                                         project,
                                                                         username)
         dailies_gizmo = _create_node(gizmo_class, knobs=gizmo_knob_values) if gizmo_class else None
-        softclip = _create_soft_clip_node(camera_data)
-        grade = _create_grade_node(camera_data)
-        colorspace_node = _create_node("Colorspace", knobs={"colorspace_in": "sRGB"})
         undistort = _get_undistort_from_script(camera_data["undistort_script_path"])[0]
         camera = _get_camera(camera_data)
         camera_for_3d_export = _get_camera(camera_data, read_node=read, undistort=undistort, for_3d_export=True)
@@ -697,14 +689,11 @@ def _start():
             "camera_for_3d_export": camera_for_3d_export,
             "read": read,
             "dailies_gizmo": dailies_gizmo,
-            "color_nodes": [softclip, grade, colorspace_node],
             "undistort": undistort,
             "name": camera_data["name"]
         })
 
     point_groups = _get_point_groups()
-
-    _set_root_settings()
 
     # shuffle nodes
     nodes_data = {

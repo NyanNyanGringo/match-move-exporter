@@ -112,6 +112,7 @@ def button_clicked_callback(requester, widget, action) -> None:
 
 def label_changed_callback(requester, widget, action) -> None:
     LOGGER.info(f"New callback from widget {widget} received, action: {action}")
+    save_config()
 
 def project_changed_callback(requester, widget, action) -> None:
     LOGGER.info(f"New callback from widget {widget} received, action: {action}")
@@ -238,11 +239,7 @@ class JsonForNuke:
                 "name": "",  # name of camera.
                 "undistort_script_path": ".../Temp/undistort_for_CameraName.nk",
                 "source": {
-                    "path": ".../source/source.####.exr"
-                    "black_point": 0.0,
-                    "white_point": 0.0,
-                    "gamma": 0.0,
-                    "softclip": 0.0
+                    "path": ".../source/source.####.exr",
                 },
                 "width": 0,
                 "height": 0
@@ -354,9 +351,7 @@ class JsonForNuke:
             "undistort_script_path": nk_undistort_path,
             "source": {
                 "path": tde4.getCameraPath(camera),
-                "black_white": tde4.getCamera8BitColorBlackWhite(camera),
-                "gamma": tde4.getCamera8BitColorGamma(camera),
-                "softclip": tde4.getCamera8BitColorSoftclip(camera)},
+            },
             "width": tde4.getCameraImageWidth(camera),
             "height": tde4.getCameraImageHeight(camera),
         }
@@ -456,7 +451,7 @@ class JsonForNuke:
             overscan_h_pc=1.0,
             export_material=0,  # means not to export UV textures
             unit_scale_factor=1.0,  # cm -> cm
-            frame0=float(tde4.getCameraFrameOffset(tde4.getFirstCamera())),  # start frame
+            frame0=float(tde4.getCameraFrameOffset(tde4.getFirstCamera())) - 1,  # start frame
             hide_ref=0  # means not to hires reference frames
         )
 
@@ -606,6 +601,10 @@ def validName(name):
 
 def save_config():
     config_utilities.write_config(
+        ConfigKeys.NAME, tde4.getWidgetValue(requester, "textfield_name")
+    )
+
+    config_utilities.write_config(
         ConfigKeys.PROJECT, tde4.getWidgetValue(requester, "textfield_project")
     )
 
@@ -616,7 +615,11 @@ def save_config():
 def load_config():
     config_utilities.setup_config()
 
-    tde4.setWidgetValue(requester, "textfield_name", UserConfig.get_default_name())
+    if config_utilities.check_key(ConfigKeys.NAME):
+        value = config_utilities.read_config_key(ConfigKeys.NAME)
+        tde4.setWidgetValue(requester, "textfield_name", value)
+    else:
+        tde4.setWidgetValue(requester, "textfield_name", UserConfig.get_default_name())
 
     tde4.setWidgetLabel(requester, "label_pattern", UserConfig.get_name_pattern())
 

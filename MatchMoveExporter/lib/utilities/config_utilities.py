@@ -13,6 +13,7 @@ from MatchMoveExporter.userconfig import UserConfig
 
 
 class ConfigKeys:
+    NAME = "name"
     PROJECT = "project"
     USERNAME = "username"
 
