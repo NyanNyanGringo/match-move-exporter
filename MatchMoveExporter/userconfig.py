@@ -129,7 +129,7 @@ class UserConfig:
         plate in 3D software. To match Camera, Geo and Plate - we have to
         adjust focal or aperture.
         """
-        return CameraConfig.ADJUST_FOCAL
+        return CameraConfig.ADJUST_APERTURE
 
     @staticmethod
     def get_gizmos_path() -> str:
