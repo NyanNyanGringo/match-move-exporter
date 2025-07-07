@@ -9,7 +9,7 @@ In this file you can setup MatchMoveExporter for self- or studio- pipeline.
 
 import os
 from pathlib import Path
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List, Union
 
 from MatchMoveExporter.lib.utilities.os_utilities import get_root_path, get_version_with_postfix
 from MatchMoveExporter.lib.utilities.userconfig_utilities import CameraConfig
@@ -19,7 +19,7 @@ class UserConfig:
     # Choose which files to export
     export_geo: bool = True
     export_stmap: bool = True
-    export_undistort: bool = True
+    export_undistort: bool = False
     export_undistort_downscale: bool = True
     export_tde4_project: bool = True
     export_abc: bool = True
@@ -204,3 +204,12 @@ class UserConfig:
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
         return path
+
+    @staticmethod
+    def get_allowed_fps() -> List[Union[float, int]]:
+        """
+        Return a list of allowed FPS values.
+        If the project's FPS is not in this list, the user will see a message
+        after pressing the "Export" button.
+        """
+        return [25]
