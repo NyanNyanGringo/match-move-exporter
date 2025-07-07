@@ -103,6 +103,19 @@ def check_and_remove_files_in_existed_path(path) -> bool:
     return True
 
 
+def check_fps() -> bool:
+    fps = float(tde4.getCameraFPS(tde4.getFirstCamera()))
+    allowed_fps = [float(f) for f in UserConfig.get_allowed_fps()]
+
+    if not fps in allowed_fps:
+        message = f"Please setup correct FPS. Supported values: {','.join([str(f) for f in allowed_fps])}"
+        tde4.postQuestionRequester("Message", message, "OK")
+
+        return False
+
+    return True
+
+
 # CALLBACKS
 
 
@@ -135,7 +148,8 @@ def export_tracking_data_through_nuke(script_name: str):
 
     # check
     if not all([check_nuke_executable_path(), check_project_exists(),
-                check_nuke_script_name(), check_camera_point_group()]):
+                check_nuke_script_name(), check_camera_point_group(),
+                check_fps()]):
         return
 
     # get Python Script to execute inside Nuke
@@ -242,7 +256,8 @@ class JsonForNuke:
                     "path": ".../source/source.####.exr",
                 },
                 "width": 0,
-                "height": 0
+                "height": 0,
+                lens_is_static: bool
             },
         ],
         "point_groups": [
@@ -354,6 +369,7 @@ class JsonForNuke:
             },
             "width": tde4.getCameraImageWidth(camera),
             "height": tde4.getCameraImageHeight(camera),
+            "lens_is_static": tde4.getLensDynamicDistortionMode(tde4.getCameraLens(camera)) == "DISTORTION_STATIC",
         }
 
         return camera_dict

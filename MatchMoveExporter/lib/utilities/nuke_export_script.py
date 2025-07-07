@@ -360,7 +360,7 @@ def _create_write_dailies(intermediate_name: str = None) -> nuke.Node:
 
     return write
 
-def _create_write_stmap(intermediate_name: str = None) -> nuke.Node:
+def _create_write_stmap(intermediate_name: str = None, lens_is_static: bool = False) -> nuke.Node:
     write = _create_node("Write")
 
     filepath = _get_filepath_for_write(folder_name="stmap",
@@ -373,7 +373,10 @@ def _create_write_stmap(intermediate_name: str = None) -> nuke.Node:
     write["compression"].setValue("Zip")
     write["create_directories"].setValue(True)
     write["first"].setValue(FIRST_FRAME)
-    write["last"].setValue(LAST_FRAME)
+    if lens_is_static:
+        write["last"].setValue(FIRST_FRAME)
+    else:
+        write["last"].setValue(LAST_FRAME)
     write["use_limit"].setValue(True)
 
     LOGGER.info(filepath)
@@ -482,12 +485,13 @@ def _render_dailies(from_node: nuke.Node, intermediate_name: str = None, cleanup
         for n in nodes_to_cleanup:
             nuke.delete(n)
 
-def _render_stmap(from_node: nuke.Node, undistort: nuke.Node, intermediate_name: str = None) -> None:
+def _render_stmap(from_node: nuke.Node, undistort: nuke.Node, intermediate_name: str = None,
+                  lens_is_static: bool = False) -> None:
     stmap = _create_stmap_node()
     crop = _create_crop()
     undistort_copy = nuke.clone(undistort)
     crop_reformat = _create_crop_with_reformat()
-    write = _create_write_stmap(intermediate_name)
+    write = _create_write_stmap(intermediate_name, lens_is_static)
     nodes_to_cleanup = [stmap, crop, undistort_copy, crop_reformat, write]
 
     stmap.setInput(0, from_node)
@@ -562,7 +566,7 @@ def _shuffle_and_render_nodes(nodes_data) -> None:
                 "read": nuke.Node,
                 "undistort": nuke.Node,
                 "stmap": nuke.Node,
-                "name": str
+                "camera_data": dict
             }
         },
         "geo_nodes: [nuke.Node, ...]
@@ -621,7 +625,7 @@ def _shuffle_and_render_nodes(nodes_data) -> None:
         x_offset += 500
 
         # get intermediate_name
-        intermediate_name = _get_intermediate_name(read_group["name"], index)
+        intermediate_name = _get_intermediate_name(read_group["camera_data"]["name"], index)
 
         # render geo
         camera_for_3d_export = read_group["camera_for_3d_export"]
@@ -641,7 +645,8 @@ def _shuffle_and_render_nodes(nodes_data) -> None:
 
         # render stmap, undistort and dailies
         if UserConfig.export_stmap:
-            _render_stmap(from_node=crop, undistort=undistort, intermediate_name=intermediate_name)
+            _render_stmap(from_node=crop, undistort=undistort, intermediate_name=intermediate_name,
+                          lens_is_static=read_group["camera_data"]["lens_is_static"])
         if UserConfig.export_undistort:
             _render_undistort(from_node=undistort, intermediate_name=intermediate_name)
         if UserConfig.export_undistort_downscale:
@@ -655,8 +660,8 @@ def _shuffle_and_render_nodes(nodes_data) -> None:
 
 def _start():
 
-    nuke.scriptOpen(NUKE_SCRIPT)
     nuke.scriptSave(NUKE_SCRIPT)  # save to crete file
+    nuke.scriptOpen(NUKE_SCRIPT)
 
     _set_root_settings()
 
@@ -690,7 +695,9 @@ def _start():
             "read": read,
             "dailies_gizmo": dailies_gizmo,
             "undistort": undistort,
-            "name": camera_data["name"]
+            # "name": camera_data["name"],
+            # "lens_is_static": camera_data["lens_is_static"],
+            "camera_data": camera_data
         })
 
     point_groups = _get_point_groups()
@@ -721,4 +728,7 @@ def _start():
         os.remove(NUKE_SCRIPT)
 
 
-_start()
+try:
+ _start()
+except Exception as e:
+    LOGGER.info(e)
