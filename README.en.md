@@ -2,11 +2,11 @@
 
 [![](https://img.shields.io/badge/return-home_-blue.svg)](https://github.com/NyanNyanGringo/match-move-exporter)
 
-###### Requirements: Windows, 3DEqualizer 7.1+, Nuke 14.0+
+###### Requirements: Windows, 3DEqualizer 7.1, Nuke 14.0v7
 
 Created by [DobroCCS](https://dobrocreative.com/en)  
 Author: [Vladislav Parfentev](https://t.me/VladislavParfentev).
-Special thanks to: [Yury Bodolanov](https://t.me/bodolanov)
+Special thanks to: [Yury Bodolanov](https://t.me/bodolanov), [Dima Kraytsev](https://t.me/whataasen)
 
 ---
 

@@ -19,7 +19,7 @@ class UserConfig:
     # Choose which files to export
     export_geo: bool = True
     export_stmap: bool = True
-    export_undistort: bool = False
+    export_undistort: bool = True
     export_undistort_downscale: bool = True
     export_tde4_project: bool = True
     export_abc: bool = True
@@ -59,9 +59,10 @@ class UserConfig:
         used to set colorspace/raw, file_type and compression options.
         """
         knob_values = {
-            "raw": True,
+            "colorspace": "ACES - ACEScg",
             "file_type": "exr",
-            "compression": "DWAA"
+            "compression": "DWAA",
+            "dw_compression_level": 45,
         }
 
         return knob_values
@@ -86,7 +87,7 @@ class UserConfig:
         knob_values = {
             "colorspace": "Output - sRGB",
             "mov64_codec": "h264",
-            "mov64_bitrate": 200000
+            "mov64_bitrate": 10000
         }
 
         return knob_values

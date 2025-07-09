@@ -2,11 +2,11 @@
 
 [![en](https://img.shields.io/badge/lang-english_-blue.svg)](https://github.com/NyanNyanGringo/match-move-exporter/blob/main/README.en.md)
 
-###### Требования: Windows, 3DEqualizer 7.1+, Nuke 14.0+
+###### Требования: Windows, 3DEqualizer 7.1, Nuke 14.0v7
 
 Создано студией [DobroCCS](https://dobrocreative.com/en)  
 Автор: [Владислав Парфентьев](https://t.me/VladislavParfentev).
-Особая благодарность: [Юрий Бодоланов](https://t.me/bodolanov)
+Особая благодарность: [Юрий Бодоланов](https://t.me/bodolanov), [Дима Крайцев](https://t.me/whataasen)
 
 ---
 
